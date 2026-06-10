@@ -66,6 +66,7 @@ Run scripts in order from the repository root:
 
 | Step | Script | Description |
 |------|--------|-------------|
+| 0 | `get_data.sh` | Downloads and decompresses GEO expression matrices into `data/` |
 | 1 | `mra_GSE84844.R` | Downloads Lambert TF list → `data/`; corto network + MRA, validation cohort |
 | 2a | `mra_GSE51092.R` (steps 1–3) | Exports `data/SJS_matrix.txt` (cases-only matrix for ARACNE-AP) |
 | 2b | `run_aracne_ap.sh` | ARACNE-AP network inference → `data/sjs_network.txt` (server) |
