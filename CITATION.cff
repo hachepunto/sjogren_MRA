@@ -1,0 +1,31 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "sjogren_MRA: Master Regulator Analysis of primary Sjögren's syndrome"
+type: software
+authors:
+  - family-names: "Perez-Calixto"
+    given-names: "Daniel"
+    affiliation: "Instituto Nacional de Medicina Genómica (INMEGEN), Mexico City, Mexico"
+  - family-names: "Hernández-Lemus"
+    given-names: "Enrique"
+    affiliation: "Instituto Nacional de Medicina Genómica (INMEGEN), Mexico City, Mexico"
+  - family-names: "Tovar"
+    given-names: "Hugo"
+    affiliation: "Instituto Nacional de Medicina Genómica (INMEGEN), Mexico City, Mexico"
+version: 1.0.0
+date-released: "2026-07-03"
+url: "https://github.com/hachepunto/sjogren_MRA"
+license: GPL-3.0
+preferred-citation:
+  type: article
+  title: "Master Regulator Analysis Reveals a Reproducible Interferon-Centered Regulatory Architecture in Primary Sjögren's Syndrome"
+  authors:
+    - family-names: "Perez-Calixto"
+      given-names: "Daniel"
+    - family-names: "Hernández-Lemus"
+      given-names: "Enrique"
+    - family-names: "Tovar"
+      given-names: "Hugo"
+  journal: "Frontiers in Immunology"
+  year: 2026
+  status: submitted
