@@ -3,6 +3,7 @@ library(matrixStats)
 library(limma)
 library(tibble)
 library(readr)
+library(openxlsx)
 
 # setwd("path/to/sjogren_MRA")  # set to repo root if not using an R project
 
@@ -50,9 +51,6 @@ sig_dn66 <- de_gse66795$gene[de_gse66795$adj.P.Val < 0.05 & de_gse66795$logFC < 
 overlap_up <- rra_up[rra_up$Name %in% sig_up66, ]
 overlap_dn <- rra_dn[rra_dn$Name %in% sig_dn66, ]
 
-write_tsv(overlap_up, "DE_GSE66795_overlap_up.txt")
-write_tsv(overlap_dn, "DE_GSE66795_overlap_down.txt")
-
 print(data.frame(
     set        = c("RRA_up (n=636)", "RRA_down (n=514)"),
     replicated = c(nrow(overlap_up), nrow(overlap_dn)),
@@ -61,5 +59,32 @@ print(data.frame(
 ))
 
 # ── 5. Save ───────────────────────────────────────────────────────────────────
+build_table_s1 <- function(overlap, de) {
+    out <- merge(overlap, de[, c("gene", "logFC", "adj.P.Val")],
+                 by.x = "Name", by.y = "gene", all.x = TRUE, sort = FALSE)
+    names(out)[names(out) == "Score"] <- "RRA_score"
+    out <- out[order(out$RRA_score), c("Name", "RRA_score", "logFC", "adj.P.Val")]
+    out
+}
+
+table_s1_up <- build_table_s1(overlap_up, de_gse66795)
+table_s1_dn <- build_table_s1(overlap_dn, de_gse66795)
+
+wb <- createWorkbook()
+
+addWorksheet(wb, "Upregulated_165")
+writeData(wb, "Upregulated_165",
+          x = "Supplementary Table S1a. Genes from the cross-cohort IFN-upregulated RRA signature (n=636) that replicate in GSE66795 (limma/eBayes, adj.P.Val < 0.05 and logFC > 0; Illumina HumanHT-12 v4.0).",
+          startRow = 1, startCol = 1)
+writeData(wb, "Upregulated_165", table_s1_up, startRow = 2)
+
+addWorksheet(wb, "Downregulated_11")
+writeData(wb, "Downregulated_11",
+          x = "Supplementary Table S1b. Genes from the cross-cohort IFN-downregulated RRA signature (n=514) that replicate in GSE66795 (limma/eBayes, adj.P.Val < 0.05 and logFC < 0; Illumina HumanHT-12 v4.0).",
+          startRow = 1, startCol = 1)
+writeData(wb, "Downregulated_11", table_s1_dn, startRow = 2)
+
+saveWorkbook(wb, "Table_S1_DE_GSE66795_replication.xlsx", overwrite = TRUE)
+
 save(eset, disease, de_gse66795, overlap_up, overlap_dn,
      file = "DE_GSE66795_replication.rda")
