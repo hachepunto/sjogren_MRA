@@ -37,6 +37,10 @@ packinfo <- function(save = FALSE) {
 
 # setwd("path/to/sjogren_MRA")  # set to repo root if not using an R project
 
+# Carpetas de salida
+invisible(lapply(c("results/networks", "results/mra", "results/de"),
+                 dir.create, recursive = TRUE, showWarnings = FALSE))
+
 # ── 0. TF list — Lambert et al. 2018 (Cell, PMID: 29425488) ──────────────────
 # Source: https://humantfs.ccbr.utoronto.ca/download/v_1.01/DatabaseExtract_v_1.01.csv
 lambert_csv <- "data/lambert2018_DatabaseExtract_v1.01.csv"
@@ -51,7 +55,7 @@ lambert_db      <- read.csv(lambert_csv, check.names = FALSE)
 lambert_symbols <- unique(na.omit(lambert_db[["HGNC symbol"]][lambert_db[["Is TF?"]] == "Yes"]))
 cat("Lambert et al. TFs:", length(lambert_symbols), "\n")
 
-writeLines(lambert_symbols, "data/TFs_Lambert2018.txt")
+writeLines(lambert_symbols, "results/networks/TFs_Lambert2018.txt")
 
 # ── 1. Read local series matrix (GPL570 annotation downloaded once, cached) ──
 gse <- getGEO(filename = "data/GSE84844_series_matrix.txt",
@@ -99,8 +103,8 @@ regulon_gse84844 <- corto(
     verbose     = TRUE
 )
 
-save(regulon_gse84844, disease, file = "regulon_GSE84844_corto.rda")
-cat("Network saved to regulon_GSE84844_corto.rda\n")
+save(regulon_gse84844, disease, file = "results/networks/regulon_GSE84844_corto.rda")
+cat("Network saved to results/networks/regulon_GSE84844_corto.rda\n")
 
 # ── 6. Master Regulator Analysis — GSE84844 ───────────────────────────────────
 Ncases    <- which(disease == "pSS")
@@ -116,7 +120,7 @@ mrs_gse84844 <- msviper(signature, regulon_gse84844, nullmodel)
 print(summary(mrs_gse84844))
 
 top_mrs <- viper_mrsTopTable(mrs_gse84844, n = 100)
-write_tsv(top_mrs, "top100_MRs_GSE84844.txt")
+write_tsv(top_mrs, "results/mra/top100_MRs_GSE84844.txt")
 
 # ── 7. Expresión diferencial (limma) ──────────────────────────────────────────
 disease_f    <- factor(disease, levels = c("control", "pSS"))
@@ -126,9 +130,9 @@ fit          <- eBayes(fit)
 de_gse84844 <- topTable(fit, coef = 2, number = Inf,
                          adjust.method = "BH", sort.by = "P")
 de_gse84844 <- tibble::rownames_to_column(de_gse84844, var = "gene")
-write_tsv(de_gse84844, "DE_limma_GSE84844.txt")
+write_tsv(de_gse84844, "results/de/DE_limma_GSE84844.txt")
 cat("DE: ", sum(de_gse84844$adj.P.Val < 0.05), "genes significativos (FDR < 0.05)\n")
 
-save(mrs_gse84844, top_mrs, de_gse84844, file = "mra_GSE84844.rda")
+save(mrs_gse84844, top_mrs, de_gse84844, file = "results/mra/mra_GSE84844.rda")
 
 packinfo(save = TRUE)

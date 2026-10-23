@@ -2,6 +2,10 @@ library(RobustRankAggreg)
 
 # setwd("path/to/sjogren_MRA")  # set to repo root if not using an R project
 
+# Carpetas de salida
+invisible(lapply(c("results/integration"),
+                 dir.create, recursive = TRUE, showWarnings = FALSE))
+
 # Integración de MRs restringida al universo compartido (TFs con regulón en
 # AMBAS redes). Sustituye la RRA sobre la unión de reguladores, en la que un TF
 # presente en una sola red podía alcanzar Score < 0.05 por sí solo.
@@ -14,7 +18,7 @@ library(RobustRankAggreg)
 #       de TFs en esa dirección, BH sobre el Score.
 
 # ── 1. Tabla de TFs compartidos (de compare_MRs.R) ───────────────────────────
-sh <- read.delim("MRs_comparacion.txt")
+sh <- read.delim("results/integration/MRs_comparacion.txt")
 n1 <- "NES_gse51092"; n2 <- "NES_84844"
 
 sh$same_sign <- sign(sh[[n1]]) == sign(sh[[n2]])
@@ -42,8 +46,8 @@ sh$RRA_score <- rra_all$Score[match(sh$Regulon, rra_all$Name)]
 sh$RRA_BH    <- rra_all$RRA_BH[match(sh$Regulon, rra_all$Name)]
 
 # ── 4. Referencia: lista de consenso de la v2 (RRA sobre la unión) ───────────
-v2_act <- read.delim("MRs_RRA_activated.txt")$Name
-v2_rep <- read.delim("MRs_RRA_repressed.txt")$Name
+v2_act <- read.delim("results/integration/MRs_RRA_activated.txt")$Name
+v2_rep <- read.delim("results/integration/MRs_RRA_repressed.txt")$Name
 sh$v2_consensus <- ifelse(sh$Regulon %in% v2_act, "activated",
                    ifelse(sh$Regulon %in% v2_rep, "repressed", ""))
 
@@ -71,8 +75,8 @@ out_cols <- c("Regulon", n1, "p.value_gse51092", "rank_gse51092",
               n2, "p.value_84844", "rank_84844",
               "direction", "z_stouffer", "p_stouffer", "BH_stouffer",
               "RRA_score", "RRA_BH", "v2_consensus")
-write.table(sh[, out_cols], "MRs_meta_shared.txt",
+write.table(sh[, out_cols], "results/integration/MRs_meta_shared.txt",
             sep = "\t", quote = FALSE, row.names = FALSE)
-write.table(concordance, "MRs_concordance_tests.txt",
+write.table(concordance, "results/integration/MRs_concordance_tests.txt",
             sep = "\t", quote = FALSE, row.names = FALSE)
-save(sh, concordance, rra_act, rra_rep, file = "meta_MRs_results.rda")
+save(sh, concordance, rra_act, rra_rep, file = "results/integration/meta_MRs_results.rda")

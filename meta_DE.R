@@ -2,6 +2,10 @@ library(RobustRankAggreg)
 
 # setwd("path/to/sjogren_MRA")  # set to repo root if not using an R project
 
+# Carpetas de salida
+invisible(lapply(c("results/integration"),
+                 dir.create, recursive = TRUE, showWarnings = FALSE))
+
 # Integración de expresión diferencial restringida a los genes medidos en AMBAS
 # matrices (8,007). Sustituye la RRA sobre las tablas completas, en la que un
 # gen medido en una sola plataforma podía entrar como "robusto".
@@ -13,7 +17,7 @@ library(RobustRankAggreg)
 #   (c) RRA restringida, N = genes concordantes en esa dirección; BH sobre Score.
 
 # ── 1. Tabla de genes compartidos (de compare_ED.R) ──────────────────────────
-d <- read.delim("DE_comparacion.txt")
+d <- read.delim("results/de/DE_comparacion.txt")
 d$same_sign <- sign(d$logFC_51) == sign(d$logFC_84)
 d$direction <- ifelse(!d$same_sign, "discordant",
                       ifelse(d$logFC_51 > 0, "up", "down"))
@@ -45,8 +49,8 @@ d$RRA_score <- rra_all$Score[match(d$gene, rra_all$Name)]
 d$RRA_BH    <- rra_all$RRA_BH[match(d$gene, rra_all$Name)]
 
 # ── 5. Referencia: listas RRA de la v2 corregida (sobre tablas completas) ────
-v2_up <- read.delim("DE_RRA_upregulated.txt")$Name
-v2_dn <- read.delim("DE_RRA_downregulated.txt")$Name
+v2_up <- read.delim("results/de/DE_RRA_upregulated.txt")$Name
+v2_dn <- read.delim("results/de/DE_RRA_downregulated.txt")$Name
 d$v2_rra <- ifelse(d$gene %in% v2_up, "up", ifelse(d$gene %in% v2_dn, "down", ""))
 
 # ── 6. Salida ─────────────────────────────────────────────────────────────────
@@ -55,6 +59,6 @@ out_cols <- c("gene", "logFC_51", "P.Value_51", "adj.P.Val_51",
               "logFC_84", "P.Value_84", "adj.P.Val_84",
               "direction", "replicated", "z_stouffer", "p_stouffer",
               "BH_stouffer", "meta_sig", "RRA_score", "RRA_BH", "v2_rra")
-write.table(d[, out_cols], "DE_meta_shared.txt",
+write.table(d[, out_cols], "results/integration/DE_meta_shared.txt",
             sep = "\t", quote = FALSE, row.names = FALSE)
-save(d, rra_up, rra_dn, file = "meta_DE_results.rda")
+save(d, rra_up, rra_dn, file = "results/integration/meta_DE_results.rda")

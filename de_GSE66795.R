@@ -7,6 +7,10 @@ library(openxlsx)
 
 # setwd("path/to/sjogren_MRA")  # set to repo root if not using an R project
 
+# Carpetas de salida
+invisible(lapply(c("results/validation"),
+                 dir.create, recursive = TRUE, showWarnings = FALSE))
+
 # ── 1. Expression matrix (47323 probes → genes × 160 samples) ────────────────
 gse     <- getGEO(filename = "data/GSE66795_series_matrix.txt", GSEMatrix = TRUE)
 eset    <- exprs(gse)
@@ -39,12 +43,12 @@ fit       <- eBayes(fit)
 de_gse66795 <- topTable(fit, coef = 2, number = Inf,
                          adjust.method = "BH", sort.by = "P")
 de_gse66795 <- rownames_to_column(de_gse66795, var = "gene")
-write_tsv(de_gse66795, "DE_limma_GSE66795.txt")
+write_tsv(de_gse66795, "results/validation/DE_limma_GSE66795.txt")
 
 # ── 4. Solapamiento con los conjuntos replicados (FDR < 0.05 en ambas cohortes)
 # Se conservan los nombres rra_up / rra_dn por compatibilidad con el resto del
 # script; la columna Name es el símbolo y Score el p combinado (Stouffer).
-load("comparison_DE_results.rda")   # shared (con z_stouffer, p_stouffer), sig_up, sig_dn
+load("results/de/comparison_DE_results.rda")   # shared (con z_stouffer, p_stouffer), sig_up, sig_dn
 rep_cols <- c("gene", "p_stouffer", "logFC_51", "adj.P.Val_51", "logFC_84", "adj.P.Val_84")
 rra_up <- shared[shared$concordant_up,   rep_cols]
 rra_dn <- shared[shared$concordant_down, rep_cols]
@@ -96,7 +100,7 @@ writeData(wb, sheet_dn,
           startRow = 1, startCol = 1)
 writeData(wb, sheet_dn, table_s1_dn, startRow = 2)
 
-saveWorkbook(wb, "Table_S1_DE_GSE66795_replication.xlsx", overwrite = TRUE)
+saveWorkbook(wb, "results/validation/Table_S1_DE_GSE66795_replication.xlsx", overwrite = TRUE)
 
 save(eset, disease, de_gse66795, overlap_up, overlap_dn,
-     file = "DE_GSE66795_replication.rda")
+     file = "results/validation/DE_GSE66795_replication.rda")

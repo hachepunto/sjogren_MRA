@@ -1,12 +1,16 @@
 # setwd("path/to/sjogren_MRA")  # set to repo root if not using an R project
 
+# Carpetas de salida
+invisible(lapply(c("results/integration"),
+                 dir.create, recursive = TRUE, showWarnings = FALSE))
+
 # Convergencia entre actividad (MRs de consenso, meta_MRs.R) y expresión
 # (genes replicados, compare_ED.R / meta_DE.R): qué TFs son a la vez
 # reguladores con z combinado concordante y genes replicados en la misma
 # dirección.
 
-mr <- read.delim("MRs_meta_shared.txt")
-de <- read.delim("DE_meta_shared.txt")
+mr <- read.delim("results/integration/MRs_meta_shared.txt")
+de <- read.delim("results/integration/DE_meta_shared.txt")
 
 mr$consensus <- mr$direction != "discordant" & mr$BH_stouffer < 0.10
 
@@ -24,7 +28,7 @@ out <- m[order(m$p_stouffer), c("Regulon", "direction_MR", "z_stouffer_MR", "BH_
                                 "consensus", "measured_in_DE", "direction_DE", "replicated",
                                 "logFC_51", "adj.P.Val_51", "logFC_84", "adj.P.Val_84",
                                 "z_stouffer_DE", "BH_stouffer_DE", "DE_same_direction")]
-write.table(out, "MR_DE_convergence.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(out, "results/integration/MR_DE_convergence.txt", sep = "\t", quote = FALSE, row.names = FALSE)
 
 # Resumen: consenso (14) y 240 compartidos con signo concordante
 summary_tab <- data.frame(
@@ -37,4 +41,4 @@ summary_tab <- data.frame(
                                sum(m$direction_MR != "discordant" & m$DE_same_direction),
                                sum(m$DE_same_direction))
 )
-write.table(summary_tab, "MR_DE_convergence_summary.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(summary_tab, "results/integration/MR_DE_convergence_summary.txt", sep = "\t", quote = FALSE, row.names = FALSE)

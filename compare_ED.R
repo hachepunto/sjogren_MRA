@@ -8,9 +8,13 @@ library(patchwork)
 
 # setwd("path/to/sjogren_MRA")  # set to repo root if not using an R project
 
+# Carpetas de salida
+invisible(lapply(c("results/de", "results/enrichment", "results/figures"),
+                 dir.create, recursive = TRUE, showWarnings = FALSE))
+
 # ── 1. Cargar resultados DE ───────────────────────────────────────────────────
-de51 <- as.data.frame(read_tsv("DE_limma_GSE51092.txt"))
-de84 <- as.data.frame(read_tsv("DE_limma_GSE84844.txt"))
+de51 <- as.data.frame(read_tsv("results/de/DE_limma_GSE51092.txt"))
+de84 <- as.data.frame(read_tsv("results/de/DE_limma_GSE84844.txt"))
 
 
 # ── 2. Genes compartidos y tabla comparativa ──────────────────────────────────
@@ -25,7 +29,7 @@ shared$sig84 <- shared$adj.P.Val_84 < 0.05
 shared$concordant_up   <- shared$sig51 & shared$sig84 & shared$logFC_51 > 0 & shared$logFC_84 > 0
 shared$concordant_down <- shared$sig51 & shared$sig84 & shared$logFC_51 < 0 & shared$logFC_84 < 0
 
-write.table(shared, file = "DE_comparacion.txt", quote = FALSE, sep = "\t",
+write.table(shared, file = "results/de/DE_comparacion.txt", quote = FALSE, sep = "\t",
             row.names = FALSE)
 
 # ── 3. Robust Rank Aggregation ────────────────────────────────────────────────
@@ -50,9 +54,9 @@ run_rra_de <- function(d1, d2, direction = c("up", "down")) {
 rra_up <- run_rra_de(de51, de84, "up")
 rra_dn <- run_rra_de(de51, de84, "down")
 
-write.table(rra_up[rra_up$Score < 0.05, ], file = "DE_RRA_upregulated.txt",
+write.table(rra_up[rra_up$Score < 0.05, ], file = "results/de/DE_RRA_upregulated.txt",
             quote = FALSE, sep = "\t", row.names = FALSE)
-write.table(rra_dn[rra_dn$Score < 0.05, ], file = "DE_RRA_downregulated.txt",
+write.table(rra_dn[rra_dn$Score < 0.05, ], file = "results/de/DE_RRA_downregulated.txt",
             quote = FALSE, sep = "\t", row.names = FALSE)
 
 # ── 4. Genes replicados (usados en ORA y figura) ─────────────────────────────
@@ -101,16 +105,16 @@ ereact_de <- enrichPathway(
     readable      = TRUE
 )
 
-write.table(as.data.frame(ego_de),    "DE_ORA_GO_BP.txt",    sep = "\t", quote = FALSE, row.names = FALSE)
-write.table(as.data.frame(ereact_de), "DE_ORA_Reactome.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(as.data.frame(ego_de),    "results/enrichment/DE_ORA_GO_BP.txt",    sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(as.data.frame(ereact_de), "results/enrichment/DE_ORA_Reactome.txt", sep = "\t", quote = FALSE, row.names = FALSE)
 
 # ── 6. Guardar resultados ─────────────────────────────────────────────────────
 write.table(shared[shared$concordant_up,   c("gene", "logFC_51", "adj.P.Val_51", "logFC_84", "adj.P.Val_84")],
-            "DE_replicated_up.txt",   sep = "\t", quote = FALSE, row.names = FALSE)
+            "results/de/DE_replicated_up.txt",   sep = "\t", quote = FALSE, row.names = FALSE)
 write.table(shared[shared$concordant_down, c("gene", "logFC_51", "adj.P.Val_51", "logFC_84", "adj.P.Val_84")],
-            "DE_replicated_down.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+            "results/de/DE_replicated_down.txt", sep = "\t", quote = FALSE, row.names = FALSE)
 save(shared, rra_up, rra_dn, sig_up, sig_dn, ego_de, ereact_de,
-     file = "comparison_DE_results.rda")
+     file = "results/de/comparison_DE_results.rda")
 
 # ── 7. Figure (ggplot2 + patchwork) ──────────────────────────────────────────
 # Layout (column-major, nrow=2):   A | C
@@ -228,7 +232,7 @@ pD <- ggplot(lol_dn, aes(x = logp, y = reorder(Name, logp))) +
 fig <- pA + pC + pB + pD +
     plot_layout(ncol = 2, widths = c(1, 0.5), heights = c(1, 1))
 
-pdf("DE_integrative_figure.pdf", width = 16, height = 12)
+pdf("results/figures/DE_integrative_figure.pdf", width = 16, height = 12)
 print(fig)
 dev.off()
 

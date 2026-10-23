@@ -36,6 +36,10 @@ packinfo <- function(save = FALSE) {
 
 # setwd("path/to/sjogren_MRA")  # set to repo root if not using an R project
 
+# Carpetas de salida
+invisible(lapply(c("results/mra", "results/de", "results/figures"),
+                 dir.create, recursive = TRUE, showWarnings = FALSE))
+
 # ── 1. Expression matrix completa (15063 probes → 11409 genes x 222 muestras) ─
 gse   <- getGEO(filename = "data/GSE51092_series_matrix.txt", GSEMatrix = TRUE)
 eset  <- exprs(gse)
@@ -64,12 +68,12 @@ print(table(disease))
 
 # ── 3. Export cases-only matrix for ARACNE-AP ────────────────────────────────
 # Run run_aracne_ap.sh after this block, then re-open to continue from step 4.
-# Skip if data/sjs_network.txt already exists.
+# Skip if results/networks/sjs_network.txt already exists.
 cases_mat <- eset[, disease == "pSS"]
 write.table(cases_mat, "data/SJS_matrix.txt", sep = "\t", quote = FALSE, col.names = NA)
 
 # ── 4. Regulon desde ARACNE-AP ────────────────────────────────────────────────
-regulon_gse51092 <- aracne2regulon("data/sjs_network.txt", eset)
+regulon_gse51092 <- aracne2regulon("results/networks/sjs_network.txt", eset)
 cat("Regulon:", length(regulon_gse51092), "TFs\n")
 
 # ── 5. Firma molecular ────────────────────────────────────────────────────────
@@ -91,9 +95,9 @@ mrs_gse51092 <- ledge(mrs_gse51092)
 
 # ── 7. Resultados MRA ─────────────────────────────────────────────────────────
 top_mrs <- viper_mrsTopTable(mrs_gse51092, n = 100)
-write_tsv(top_mrs, "top100_MRs_GSE51092.txt")
+write_tsv(top_mrs, "results/mra/top100_MRs_GSE51092.txt")
 
-pdf("Top10_MRs_GSE51092.pdf", width = 6, height = 7)
+pdf("results/figures/Top10_MRs_GSE51092.pdf", width = 6, height = 7)
 plot(mrs_gse51092, mrs = 10, cex = 0.7)
 dev.off()
 
@@ -105,11 +109,11 @@ fit            <- eBayes(fit)
 de_gse51092   <- topTable(fit, coef = 2, number = Inf,
                            adjust.method = "BH", sort.by = "P")
 de_gse51092   <- tibble::rownames_to_column(de_gse51092, var = "gene")
-write_tsv(de_gse51092, "DE_limma_GSE51092.txt")
+write_tsv(de_gse51092, "results/de/DE_limma_GSE51092.txt")
 cat("DE: ", sum(de_gse51092$adj.P.Val < 0.05), "genes significativos (FDR < 0.05)\n")
 
 save(mrs_gse51092, top_mrs, regulon_gse51092, eset, disease, de_gse51092,
-     file = "mra_GSE51092.rda")
+     file = "results/mra/mra_GSE51092.rda")
 
 packinfo(save = TRUE)
-cat("Done. Resultados en top100_MRs_GSE51092.txt y DE_limma_GSE51092.txt\n")
+cat("Done. Resultados en results/mra/top100_MRs_GSE51092.txt y results/de/DE_limma_GSE51092.txt\n")
