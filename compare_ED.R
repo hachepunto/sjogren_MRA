@@ -29,10 +29,10 @@ write.table(shared, file = "DE_comparacion.txt", quote = FALSE, sep = "\t",
             row.names = FALSE)
 
 # ── 3. Robust Rank Aggregation ────────────────────────────────────────────────
-# Genes ordenados por P.Value ascendente dentro de cada dirección.
-# Para down se invierte la lista (mismo criterio que compare_MRs.R):
-# los genes con logFC < 0 aparecen en orden P.Value ascendente al filtrar,
-# rev() pone el más significativo al final → rank N (el "mejor" para RRA repressed).
+# Genes ordenados por P.Value ascendente dentro de cada dirección: en ambas
+# direcciones el gen más significativo ocupa el rango 1, que es el "mejor"
+# para aggregateRanks. (Versión anterior invertía la lista down con rev(),
+# lo que premiaba a los genes MENOS significativos; corregido en la revisión.)
 
 run_rra_de <- function(d1, d2, direction = c("up", "down")) {
     direction <- match.arg(direction)
@@ -40,8 +40,8 @@ run_rra_de <- function(d1, d2, direction = c("up", "down")) {
         l1 <- d1$gene[d1$logFC > 0][order(d1$P.Value[d1$logFC > 0])]
         l2 <- d2$gene[d2$logFC > 0][order(d2$P.Value[d2$logFC > 0])]
     } else {
-        l1 <- rev(d1$gene[d1$logFC < 0][order(d1$P.Value[d1$logFC < 0])])
-        l2 <- rev(d2$gene[d2$logFC < 0][order(d2$P.Value[d2$logFC < 0])])
+        l1 <- d1$gene[d1$logFC < 0][order(d1$P.Value[d1$logFC < 0])]
+        l2 <- d2$gene[d2$logFC < 0][order(d2$P.Value[d2$logFC < 0])]
     }
     rra <- aggregateRanks(list(GSE51092 = l1, GSE84844 = l2))
     rra[order(rra$Score), ]
@@ -55,9 +55,19 @@ write.table(rra_up[rra_up$Score < 0.05, ], file = "DE_RRA_upregulated.txt",
 write.table(rra_dn[rra_dn$Score < 0.05, ], file = "DE_RRA_downregulated.txt",
             quote = FALSE, sep = "\t", row.names = FALSE)
 
-# ── 4. Genes robustos DE (usados en ORA y figura) ────────────────────────────
-sig_up <- rra_up$Name[rra_up$Score < 0.05]
-sig_dn <- rra_dn$Name[rra_dn$Score < 0.05]
+# ── 4. Genes replicados (usados en ORA y figura) ─────────────────────────────
+# Criterio primario: FDR < 0.05 en ambas cohortes con el mismo signo
+# (concordant_up / concordant_down de la sección 2). La RRA de la sección 3
+# se conserva solo como referencia (ver meta_DE.R para Stouffer y RRA
+# restringida sobre los genes compartidos).
+sig_up <- shared$gene[shared$concordant_up]
+sig_dn <- shared$gene[shared$concordant_down]
+
+# z combinado (Stouffer) para ordenar los paneles C y D
+z_from <- function(p, lfc) sign(lfc) * qnorm(p / 2, lower.tail = FALSE)
+shared$z_stouffer <- (z_from(shared$P.Value_51, shared$logFC_51) +
+                      z_from(shared$P.Value_84, shared$logFC_84)) / sqrt(2)
+shared$p_stouffer <- 2 * pnorm(-abs(shared$z_stouffer))
 
 # ── 5. ORA sobre genes DE robustos (set único, sin dirección) ────────────────
 sym2entrez <- function(genes) {
@@ -95,7 +105,11 @@ write.table(as.data.frame(ego_de),    "DE_ORA_GO_BP.txt",    sep = "\t", quote =
 write.table(as.data.frame(ereact_de), "DE_ORA_Reactome.txt", sep = "\t", quote = FALSE, row.names = FALSE)
 
 # ── 6. Guardar resultados ─────────────────────────────────────────────────────
-save(shared, rra_up, rra_dn, ego_de, ereact_de,
+write.table(shared[shared$concordant_up,   c("gene", "logFC_51", "adj.P.Val_51", "logFC_84", "adj.P.Val_84")],
+            "DE_replicated_up.txt",   sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(shared[shared$concordant_down, c("gene", "logFC_51", "adj.P.Val_51", "logFC_84", "adj.P.Val_84")],
+            "DE_replicated_down.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+save(shared, rra_up, rra_dn, sig_up, sig_dn, ego_de, ereact_de,
      file = "comparison_DE_results.rda")
 
 # ── 7. Figure (ggplot2 + patchwork) ──────────────────────────────────────────
@@ -105,19 +119,26 @@ save(shared, rra_up, rra_dn, ego_de, ereact_de,
 # Column widths: left=1, right=0.5 → PDF 12×16 gives 8×8 left panels, 4×8 right panels
 
 shared$status <- "Not significant"
-shared$status[(shared$sig51 | shared$sig84) & !shared$concordant_up & !shared$concordant_down] <- "Single dataset only"
-shared$status[shared$gene %in% sig_up] <- "Up robust (RRA)"
-shared$status[shared$gene %in% sig_dn] <- "Down robust (RRA)"
+shared$status[xor(shared$sig51, shared$sig84)] <- "FDR < 0.05 one cohort"
+shared$status[shared$sig51 & shared$sig84 &
+              sign(shared$logFC_51) != sign(shared$logFC_84)] <- "Discordant (FDR < 0.05 both, opposite sign)"
+shared$status[shared$concordant_up] <- "Replicated up (FDR < 0.05 both)"
+shared$status[shared$concordant_down] <- "Replicated down (FDR < 0.05 both)"
 shared$status <- factor(shared$status,
-    levels = c("Up robust (RRA)", "Down robust (RRA)", "Single dataset only", "Not significant"))
+    levels = c("Replicated up (FDR < 0.05 both)", "Replicated down (FDR < 0.05 both)",
+               "FDR < 0.05 one cohort", "Discordant (FDR < 0.05 both, opposite sign)",
+               "Not significant"))
 
 cols_status <- c(
-    "Up robust (RRA)"     = "#D73027",
-    "Down robust (RRA)"   = "#4575B4",
-    "Single dataset only" = "#FEE090",
-    "Not significant"     = "grey80"
+    "Replicated up (FDR < 0.05 both)"             = "#D73027",
+    "Replicated down (FDR < 0.05 both)"           = "#4575B4",
+    "FDR < 0.05 one cohort"                       = "#FEE090",
+    "Discordant (FDR < 0.05 both, opposite sign)" = "#984EA3",
+    "Not significant"                             = "grey80"
 )
+# Etiquetas solo para los replicados más extremos por z combinado
 shared_sig <- shared[shared$gene %in% c(sig_up, sig_dn), ]
+shared_sig <- shared_sig[order(-abs(shared_sig$z_stouffer)), ][1:60, ]
 
 # Panel A — logFC scatter (1:1, coord_fixed forces equal axis scales)
 pA <- ggplot(shared, aes(logFC_51, logFC_84, fill = status)) +
@@ -131,6 +152,7 @@ pA <- ggplot(shared, aes(logFC_51, logFC_84, fill = status)) +
     coord_fixed() +
     labs(x = "logFC — GSE51092 (n=222)", y = "logFC — GSE84844 (n=60)",
          title = "A   Cross-dataset differential expression") +
+    guides(fill = guide_legend(ncol = 2)) +
     theme_bw(base_size = 9) +
     theme(legend.position = "bottom",
           plot.title      = element_text(face = "bold", size = 10))
@@ -162,41 +184,43 @@ pB <- ggplot(ora_df, aes(x = GeneRatioNum, y = Description)) +
                              override.aes = list(fill = "grey50", color = "white"))
     ) +
     labs(x = "Gene Ratio", y = NULL,
-         title = "B   Functional enrichment — robust DE genes") +
+         title = "B   Functional enrichment — replicated DE genes") +
     theme_bw(base_size = 9) +
     theme(axis.text.y    = element_text(size = 8),
           plot.title     = element_text(face = "bold", size = 10),
           legend.position = "left",
           aspect.ratio    = 1)
 
-# Panel C — Up-regulated lollipop (0.5:1)
-lol_up      <- head(rra_up[rra_up$Score < 0.05, ], 30)
-lol_up$logp <- -log10(lol_up$Score)
+# Panel C — Up-regulated lollipop (0.5:1): top 30 replicados por |z Stouffer|
+rep_up      <- shared[shared$concordant_up, ]
+lol_up      <- head(rep_up[order(-abs(rep_up$z_stouffer)), ], 30)
+lol_up$Name <- lol_up$gene
+lol_up$logp <- -log10(lol_up$p_stouffer)
 
 pC <- ggplot(lol_up, aes(x = logp, y = reorder(Name, logp))) +
     geom_segment(aes(x = 0, xend = logp, yend = reorder(Name, logp)),
                  color = "#D73027", linewidth = 1) +
     geom_point(fill = "#D73027", color = "white", shape = 21, size = 2.5) +
-    geom_vline(xintercept = -log10(0.05), linetype = "dashed", color = "grey40") +
     scale_x_continuous(expand = expansion(mult = c(0, 0.05))) +
-    labs(x = expression(-log[10](Score)), y = NULL,
-         title = "C   Up-regulated in pSS (RRA)") +
+    labs(x = expression(-log[10](italic(p)[Stouffer])), y = NULL,
+         title = "C   Up-regulated in pSS (replicated)") +
     theme_bw(base_size = 9) +
     theme(axis.text.y = element_text(size = 7),
           plot.title  = element_text(face = "bold", size = 10))
 
-# Panel D — Down-regulated lollipop (0.5:1)
-lol_dn      <- head(rra_dn[rra_dn$Score < 0.05, ], 30)
-lol_dn$logp <- -log10(lol_dn$Score)
+# Panel D — Down-regulated lollipop (0.5:1): top 30 replicados por |z Stouffer|
+rep_dn      <- shared[shared$concordant_down, ]
+lol_dn      <- head(rep_dn[order(-abs(rep_dn$z_stouffer)), ], 30)
+lol_dn$Name <- lol_dn$gene
+lol_dn$logp <- -log10(lol_dn$p_stouffer)
 
 pD <- ggplot(lol_dn, aes(x = logp, y = reorder(Name, logp))) +
     geom_segment(aes(x = 0, xend = logp, yend = reorder(Name, logp)),
                  color = "#4575B4", linewidth = 1) +
     geom_point(fill = "#4575B4", color = "white", shape = 21, size = 2.5) +
-    geom_vline(xintercept = -log10(0.05), linetype = "dashed", color = "grey40") +
     scale_x_continuous(expand = expansion(mult = c(0, 0.05))) +
-    labs(x = expression(-log[10](Score)), y = NULL,
-         title = "D   Down-regulated in pSS (RRA)") +
+    labs(x = expression(-log[10](italic(p)[Stouffer])), y = NULL,
+         title = "D   Down-regulated in pSS (replicated)") +
     theme_bw(base_size = 9) +
     theme(axis.text.y = element_text(size = 7),
           plot.title  = element_text(face = "bold", size = 10))
