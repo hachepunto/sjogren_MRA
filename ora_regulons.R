@@ -9,15 +9,15 @@ invisible(lapply(c("results/enrichment", "results/figures"),
                  dir.create, recursive = TRUE, showWarnings = FALSE))
 
 load("results/mra/mra_GSE51092.rda")                 # regulon_gse51092, eset
-load("results/integration/comparison_results.rda")  # rra_act, rra_rep
+cons <- read.delim("results/integration/MRs_meta_shared.txt")  # de meta_MRs.R
 
-# ── 1. MRs a analizar (top 5 por dirección) ───────────────────────────────────
-top10_act <- as.character(rra_act$Name[1:10])
-top10_rep <- as.character(rra_rep$Name[1:10])
-all_mrs  <- c(top10_act, top10_rep)
-
-cat("Activados:", paste(top10_act, collapse = ", "), "\n")
-cat("Reprimidos:", paste(top10_rep, collapse = ", "), "\n")
+# ── 1. MRs a analizar: consenso entre cohortes (Stouffer, BH < 0.10, mismo signo) ─
+# Sustituye el top 10 + 10 por RRA de la versión sometida: el criterio de
+# selección es ahora el mismo que define la lista de consenso del manuscrito.
+cons    <- cons[cons$BH_stouffer < 0.10 & cons$direction != "discordant", ]
+mrs_act <- cons$Regulon[cons$direction == "activated"]
+mrs_rep <- cons$Regulon[cons$direction == "repressed"]
+all_mrs <- c(mrs_act, mrs_rep)
 
 # Verificar que están en el regulon
 missing <- all_mrs[!all_mrs %in% names(regulon_gse51092)]
