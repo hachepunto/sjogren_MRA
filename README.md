@@ -45,7 +45,7 @@ The transcriptional network is inferred from pSS cases only. The full order:
    ```bash
    bash run_aracne_ap.sh
    ```
-   This requires ~300 GB RAM and 75 cores; adjust `N_CORES` and `MEM` as needed. Bootstraps go to `results/networks/aracne_ap_output/`; the consolidated network is copied to `results/networks/sjs_network.txt`.
+   With the defaults (`N_CORES=75`, `MEM=4G` per bootstrap job) this needs ~300 GB RAM in total; adjust `N_CORES` and `MEM` to your machine. Bootstraps go to `results/networks/aracne_ap_output/`; the consolidated network is copied to `results/networks/sjs_network.txt`.
 4. Continue running **`mra_GSE51092.R`** from step 4 onward
 
 ### 3. R dependencies
@@ -75,7 +75,7 @@ Run scripts in order from the repository root (`Rscript script.R`, or source the
 | 3 | `compare_MRs.R` | `results/mra/mra_*.rda` | `results/integration/MRs_comparacion.txt`, `results/integration/MRs_RRA_{activated,repressed}.txt`, `results/integration/comparison_results.rda`, `results/figures/MRs_scatter_NES.pdf` |
 | 4 | `meta_MRs.R` | `results/integration/MRs_comparacion.txt`, `MRs_RRA_*.txt` | `results/integration/MRs_meta_shared.txt`, `results/integration/MRs_concordance_tests.txt`, `results/integration/meta_MRs_results.rda` |
 | 5 | `figure_MRs.R` | `results/integration/comparison_results.rda`, `MRs_meta_shared.txt` | `results/figures/MRs_integrative_figure.pdf` |
-| 6 | `ora_regulons.R` | `results/mra/mra_GSE51092.rda`, `results/integration/comparison_results.rda` | `results/enrichment/ORA_{GO_BP,Reactome}.txt`, `results/enrichment/ORA_results.rda`, `results/figures/ORA_combined.pdf` |
+| 6 | `ora_regulons.R` | `results/mra/mra_GSE51092.rda`, `results/integration/MRs_meta_shared.txt` | `results/enrichment/ORA_{GO_BP,Reactome}.txt`, `results/enrichment/ORA_results.rda`, `results/figures/ORA_combined.pdf` |
 | 7 | `compare_ED.R` | `results/de/DE_limma_GSE{51092,84844}.txt` | `results/de/DE_comparacion.txt`, `results/de/DE_RRA_{up,down}regulated.txt`, `results/de/DE_replicated_{up,down}.txt`, `results/de/comparison_DE_results.rda`, `results/enrichment/DE_ORA_{GO_BP,Reactome}.txt`, `results/figures/DE_integrative_figure.pdf` |
 | 8 | `meta_DE.R` | `results/de/DE_comparacion.txt`, `DE_RRA_*.txt` | `results/integration/DE_meta_shared.txt`, `results/integration/meta_DE_results.rda` |
 | 9 | `convergence_MR_DE.R` | `results/integration/MRs_meta_shared.txt`, `DE_meta_shared.txt` | `results/integration/MR_DE_convergence.txt`, `results/integration/MR_DE_convergence_summary.txt` |
@@ -107,7 +107,7 @@ Steps 12–15 are robustness analyses added during peer review; they only need t
 | `results/robustness/` | Cross-network VIPER, CollecTRI VIPER, composition-adjusted MRA (steps 12–14) |
 | `results/figures/` | All PDF figures |
 
-`package_versions.tsv` (written by the MRA scripts) stays in the repository root and is tracked for reproducibility.
+`package_versions.tsv` is maintained by hand (full package list with versions and the R version), stays in the repository root and is tracked for reproducibility; the MRA scripts no longer overwrite it.
 
 ### Key objects
 
@@ -119,9 +119,9 @@ Steps 12–15 are robustness analyses added during peer review; they only need t
 | `results/integration/meta_MRs_results.rda` | Stouffer + restricted RRA over shared TFs (`sh`, `concordance`) |
 | `results/de/comparison_DE_results.rda` | `shared` genes with Stouffer z, replicated sets (`sig_up`, `sig_dn`), ORA objects |
 | `results/integration/meta_DE_results.rda` | Stouffer + restricted RRA over shared genes (`d`) |
-| `results/figures/MRs_integrative_figure.pdf` | Figure 2 — MR cross-dataset comparison |
-| `results/figures/ORA_combined.pdf` | Figure 3 — ORA on MR target genes |
-| `results/figures/DE_integrative_figure.pdf` | Figure 4 — DE cross-dataset + ORA |
+| `results/figures/MRs_integrative_figure.pdf` | Figure 3 — MR cross-dataset comparison |
+| `results/figures/ORA_combined.pdf` | Figure 4 — ORA on consensus regulon target genes |
+| `results/figures/DE_integrative_figure.pdf` | Figure 5 — replicated DE + ORA |
 
 ---
 

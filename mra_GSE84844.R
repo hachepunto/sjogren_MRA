@@ -94,6 +94,7 @@ cat("TFs present in GSE84844:", length(centroids), "of", length(lambert_symbols)
 # ── 5. Transcriptional network inference (corto) ──────────────────────────────
 N_THREADS <- 4   # local run; set to 75 if running on server
 
+set.seed(1)   # bootstraps de corto y permutaciones de ttestNull
 regulon_gse84844 <- corto(
     inmat       = eset,
     centroids   = centroids,

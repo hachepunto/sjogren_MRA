@@ -115,5 +115,5 @@ cat("DE: ", sum(de_gse51092$adj.P.Val < 0.05), "genes significativos (FDR < 0.05
 save(mrs_gse51092, top_mrs, regulon_gse51092, eset, disease, de_gse51092,
      file = "results/mra/mra_GSE51092.rda")
 
-packinfo(save = TRUE)
+# package_versions.tsv (raíz) se mantiene a mano con la lista completa de paquetes
 cat("Done. Resultados en results/mra/top100_MRs_GSE51092.txt y results/de/DE_limma_GSE51092.txt\n")

@@ -76,8 +76,9 @@ rm(e, e2)
 
 # ── 3. Resumen: concordancia ajustado vs no ajustado y consenso ajustado ─────
 ct <- function(t) {
-    r <- cor.test(t$NES_unadj, t$NES_adj, method = "spearman", exact = FALSE)
-    c(n = nrow(t), rho = unname(r$estimate), p = r$p.value)
+    ok <- complete.cases(t$NES_unadj, t$NES_adj)
+    r  <- cor.test(t$NES_unadj[ok], t$NES_adj[ok], method = "spearman", exact = FALSE)
+    c(n = sum(ok), rho = unname(r$estimate), p = r$p.value)
 }
 concordance <- data.frame(cohort = c("GSE51092", "GSE84844"),
                           rbind(ct(r51$tab), ct(r84$tab)))

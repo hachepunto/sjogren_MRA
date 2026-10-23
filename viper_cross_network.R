@@ -86,7 +86,8 @@ res <- cbind(res, m_aracne, m_corto)
 
 # ── 5. Recuperación de los MRs de consenso ───────────────────────────────────
 cons <- read.delim("results/integration/MRs_meta_shared.txt")
-cons <- cons[cons$BH_stouffer < 0.10, c("Regulon", "direction", "z_stouffer")]
+cons <- cons[cons$BH_stouffer < 0.10 & cons$direction != "discordant",
+             c("Regulon", "direction", "z_stouffer")]
 res$consensus <- res$Regulon %in% cons$Regulon
 res <- res[order(res$aracne_p), ]
 

@@ -13,8 +13,9 @@ invisible(lapply(c("results/validation", "results/figures"),
 # y 351 pacientes pSS en las cols 2-352. La cabecera tiene 351 nombres y cada
 # fila 352 campos, así que read_tsv() corría las etiquetas una posición y
 # perdía la última muestra; se lee la cabecera por separado. Sin controles.
-hdr  <- strsplit(readLines(gzfile("data/GSE140161_Processed_data.txt.gz"), n = 1),
-                 "\t")[[1]]
+con  <- gzfile("data/GSE140161_Processed_data.txt.gz")
+hdr  <- strsplit(readLines(con, n = 1), "\t")[[1]]
+close(con)
 proc <- read.delim("data/GSE140161_Processed_data.txt.gz", header = FALSE,
                    skip = 1, check.names = FALSE)
 stopifnot(ncol(proc) == length(hdr) + 1)
