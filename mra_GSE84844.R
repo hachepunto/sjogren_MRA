@@ -133,6 +133,6 @@ de_gse84844 <- tibble::rownames_to_column(de_gse84844, var = "gene")
 write_tsv(de_gse84844, "results/de/DE_limma_GSE84844.txt")
 cat("DE: ", sum(de_gse84844$adj.P.Val < 0.05), "genes significativos (FDR < 0.05)\n")
 
-save(mrs_gse84844, top_mrs, de_gse84844, file = "results/mra/mra_GSE84844.rda")
+save(mrs_gse84844, top_mrs, de_gse84844, eset, disease, file = "results/mra/mra_GSE84844.rda")
 
-packinfo(save = TRUE)
+# package_versions.tsv (raíz) se mantiene a mano con la lista completa de paquetes
