@@ -68,7 +68,7 @@ Run scripts in order from the repository root (`Rscript script.R`, or source the
 | Step | Script | Reads | Writes |
 |------|--------|-------|--------|
 | 0 | `get_data.sh` | — | `data/*_series_matrix.txt` |
-| 1 | `mra_GSE84844.R` | `data/GSE84844_series_matrix.txt`, Lambert CSV | `results/networks/TFs_Lambert2018.txt`, `results/networks/regulon_GSE84844_corto.rda`, `results/mra/mra_GSE84844.rda`, `results/mra/top100_MRs_GSE84844.txt`, `results/de/DE_limma_GSE84844.txt`, `package_versions.tsv` |
+| 1 | `mra_GSE84844.R` | `data/GSE84844_series_matrix.txt`, Lambert CSV | `results/networks/TFs_Lambert2018.txt`, `results/networks/regulon_GSE84844_corto.rda`, `results/mra/mra_GSE84844.rda`, `results/mra/top100_MRs_GSE84844.txt`, `results/de/DE_limma_GSE84844.txt` |
 | 2a | `mra_GSE51092.R` (steps 1–3) | `data/GSE51092_series_matrix.txt` | `data/SJS_matrix.txt` |
 | 2b | `run_aracne_ap.sh` | `data/SJS_matrix.txt`, `results/networks/TFs_Lambert2018.txt` | `results/networks/sjs_network.txt` (server) |
 | 2c | `mra_GSE51092.R` (steps 4–8) | `results/networks/sjs_network.txt` | `results/mra/mra_GSE51092.rda`, `results/mra/top100_MRs_GSE51092.txt`, `results/de/DE_limma_GSE51092.txt`, `results/figures/Top10_MRs_GSE51092.pdf` |
