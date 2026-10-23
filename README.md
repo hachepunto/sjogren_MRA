@@ -81,12 +81,18 @@ Run scripts in order from the repository root (`Rscript script.R`, or source the
 | 9 | `convergence_MR_DE.R` | `results/integration/MRs_meta_shared.txt`, `DE_meta_shared.txt` | `results/integration/MR_DE_convergence.txt`, `results/integration/MR_DE_convergence_summary.txt` |
 | 10 | `de_GSE66795.R` | `data/GSE66795_series_matrix.txt`, `results/de/comparison_DE_results.rda` | `results/validation/DE_limma_GSE66795.txt`, `results/validation/DE_GSE66795_replication.rda`, `results/validation/Table_S1_DE_GSE66795_replication.xlsx` |
 | 11 | `ssgsea_GSE140161.R` | `data/GSE140161_Processed_data.txt.gz`, `results/de/DE_replicated_up.txt` | `results/validation/ssGSEA_GSE140161_scores_replicated.txt`, `results/validation/ssGSEA_GSE140161_replicated.rda`, `results/figures/ssGSEA_GSE140161_replicated.pdf` |
+| 12 | `viper_cross_network.R` | `results/mra/mra_*.rda`, `results/networks/regulon_GSE84844_corto.rda`, `results/integration/MRs_meta_shared.txt` | `results/robustness/viper_cross_network{.txt,_concordance.txt,.rda}` |
+| 13 | `viper_collectri.R` | `data/collectri_regulons_human.tsv`, `results/mra/mra_*.rda`, `MRs_meta_shared.txt` | `results/robustness/viper_collectri{.txt,_concordance.txt,.rda}`, `results/robustness/consensus_vs_collectri.txt` |
+| 14 | `deconvolution_mra.R` | `results/mra/mra_*.rda`, corto regulon, `MRs_meta_shared.txt` | `results/robustness/xcell_*.txt`, `mcpcounter_*.txt`, `deconv_composition_tests.txt`, `mra_adjusted_composition.txt`, `mra_adjusted_concordance.txt`, `deconvolution_mra.rda` |
+| 15 | `fgsea_regulons.R` | `results/mra/mra_*.rda`, corto regulon, `MRs_meta_shared.txt` | `results/enrichment/fgsea_regulons_{long,wide}.txt`, `fgsea_vs_viper_concordance.txt`, `fgsea_regulons.rda` |
 
 Steps 3–5 form a chain: `compare_MRs.R` writes the shared-TF table that `meta_MRs.R` integrates, and `figure_MRs.R` draws the final figure from both outputs. Steps 7–8 are likewise sequential (`meta_DE.R` reads `DE_comparacion.txt` from `compare_ED.R`; `compare_ED.R` does not read anything from `meta_DE.R`). Step 9 needs both chains. Steps 6, 10 and 11 only need the outputs listed in their "Reads" column.
 
 Note for OneDrive-synced checkouts: `pdf()` can occasionally fail at `dev.off()` with `write failed` while the sync client holds the file; rerun the script or write the figure to a local folder and copy it into `results/figures/`.
 
 ---
+
+Steps 12–15 are robustness analyses added during peer review; they only need the `.rda` objects from steps 1–4. `data/collectri_regulons_human.tsv` is the CollecTRI TF–target table from OmniPath (`https://omnipathdb.org/interactions?datasets=collectri&organisms=9606&genesymbols=1`, academic license; complexes removed, `mor = -1` for inhibition-only edges), and steps 13–14 additionally require `decoupleR`/`OmnipathR` (optional, only to re-download CollecTRI), `fgsea`, `xCell` (GitHub `dviraran/xCell`) and `MCPcounter` (GitHub `ebecht/MCPcounter`).
 
 ## Output layout (`results/`, git-ignored)
 
@@ -98,6 +104,7 @@ Note for OneDrive-synced checkouts: `pdf()` can occasionally fail at `dev.off()`
 | `results/integration/` | Cross-cohort MR integration (`MRs_meta_shared.txt`, `MRs_concordance_tests.txt`, `comparison_results.rda`, `meta_MRs_results.rda`), DE integration (`DE_meta_shared.txt`, `meta_DE_results.rda`), MR/DE convergence tables |
 | `results/enrichment/` | ORA tables and objects for MR regulons (`ORA_*`) and for replicated DE genes (`DE_ORA_*`) |
 | `results/validation/` | GSE66795 replication (limma table, `.rda`, Supplementary Table S1 `.xlsx`) and GSE140161 ssGSEA scores |
+| `results/robustness/` | Cross-network VIPER, CollecTRI VIPER, composition-adjusted MRA (steps 12–14) |
 | `results/figures/` | All PDF figures |
 
 `package_versions.tsv` (written by the MRA scripts) stays in the repository root and is tracked for reproducibility.
@@ -107,7 +114,7 @@ Note for OneDrive-synced checkouts: `pdf()` can occasionally fail at `dev.off()`
 | File | Contents |
 |------|----------|
 | `results/mra/mra_GSE51092.rda` | `mrs_gse51092`, `regulon_gse51092`, `eset`, `disease`, `de_gse51092`, `top_mrs` |
-| `results/mra/mra_GSE84844.rda` | `mrs_gse84844`, `de_gse84844`, `top_mrs` |
+| `results/mra/mra_GSE84844.rda` | `mrs_gse84844`, `de_gse84844`, `top_mrs`, `eset`, `disease` (older files lack `eset`; `helpers_eset.R` rebuilds it on demand) |
 | `results/integration/comparison_results.rda` | `shared` (TFs with a regulon in both networks), RRA results (`rra_act`, `rra_rep`) |
 | `results/integration/meta_MRs_results.rda` | Stouffer + restricted RRA over shared TFs (`sh`, `concordance`) |
 | `results/de/comparison_DE_results.rda` | `shared` genes with Stouffer z, replicated sets (`sig_up`, `sig_dn`), ORA objects |
