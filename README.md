@@ -80,6 +80,7 @@ The consolidated network is shipped with the repository so that the MRA can be r
 | `meta_MRs.R` | Stouffer + restricted RRA over shared TFs (consensus MRs) | `results/integration/MRs_meta_shared.txt`, `MRs_concordance_tests.txt` |
 | `figure_MRs.R` | Figure 3 | `results/figures/MRs_integrative_figure.pdf` |
 | `ora_regulons.R` | ORA of consensus regulon targets (Figure 4) | `results/enrichment/ORA_*.txt`, `results/figures/ORA_combined.pdf` |
+| `ora_nonconsensus.R` | Same ORA for HESX1, ZNF684, THRA, MEF2D and FOXJ2 (outside the consensus, evaluated with the fixed network) | `results/enrichment/ORA_nonconsensus.tsv` |
 | `compare_ED.R` | Replicated DE genes, ORA | `results/de/DE_replicated_{up,down}.txt`, `comparison_DE_results.rda` |
 | `figure_DE.R` | Figure 5 | `results/figures/DE_integrative_figure.pdf` |
 | `meta_DE.R` | Stouffer + restricted RRA over shared genes | `results/integration/DE_meta_shared.txt` |
@@ -88,8 +89,11 @@ The consolidated network is shipped with the repository so that the MRA can be r
 | `ssgsea_GSE140161.R` | ssGSEA of the replicated up signature in GSE140161 | `results/validation/ssGSEA_GSE140161_scores_replicated.txt`, `results/figures/ssGSEA_GSE140161_replicated.pdf` |
 | `viper_cross_network.R` | Robustness: VIPER with the other cohort's network | `results/robustness/viper_cross_network*.txt` |
 | `viper_collectri.R` | Robustness: VIPER with CollecTRI regulons | `results/robustness/viper_collectri*.txt`, `consensus_vs_collectri.txt` |
-| `deconvolution_mra.R` | Robustness: cell composition (xCell, MCP-counter) and composition-adjusted MRA | `results/robustness/deconv_composition_tests.txt`, `mra_adjusted_*.txt` |
+| `deconvolution_mra.R` | Robustness: cell composition (xCell, MCP-counter; BH over all 16 cell types of both methods within each cohort) and composition-adjusted MRA | `results/robustness/deconv_composition_tests.txt`, `mra_adjusted_*.txt` |
+| `composition_reported.R` | Composition figures cited in the Supplementary Results | `results/robustness/composition_reported.tsv` |
 | `fgsea_regulons.R` | Robustness: fgsea of regulons vs VIPER | `results/enrichment/fgsea_regulons_*.txt`, `fgsea_vs_viper_concordance.txt` |
+| `table1_mr_summary.R` | Table 1: the 14 consensus MRs with activity, own-transcript DE, top ORA term and CollecTRI coverage | `results/integration/Table1_MR_summary.tsv` |
+| `supplementary_tables.R` | Workbook of Supplementary Tables S1–S7 | `results/Supplementary_Tables_S1-S7.xlsx` |
 
 `scripts/helpers.R` holds the shared probe-collapsing and MR-table functions. The full input/output graph is in the `Snakefile` (`snakemake --dag | dot -Tpdf > dag.pdf`).
 
@@ -107,6 +111,7 @@ The consolidated network is shipped with the repository so that the MRA can be r
 | `results/validation/` | GSE66795 replication (limma table, `.rda`, Supplementary Table S1 `.xlsx`) and GSE140161 ssGSEA scores |
 | `results/robustness/` | Cross-network VIPER, CollecTRI VIPER, composition-adjusted MRA (steps 12–14) |
 | `results/figures/` | All PDF figures |
+| `results/Supplementary_Tables_S1-S7.xlsx` | Supplementary Tables S1–S7, one sheet per table plus an index |
 
 ### Key objects
 

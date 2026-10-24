@@ -46,6 +46,8 @@ run_cohort <- function(eset, disease, regulon, mrs_own, label) {
     dc  <- deconv(eset)
     comp <- rbind(test_composition(dc$xcell[CELLS, ], disease, label, "xCell"),
                   test_composition(dc$mcp, disease, label, "MCPcounter"))
+    # BH sobre una sola familia por cohorte: 6 tipos de xCell + 10 de MCP-counter
+    # (16 pruebas), como dicen los Métodos Suplementarios; no se corrige por método
     comp$BH <- p.adjust(comp$p, "BH")
     adj <- adjusted_mra(eset, disease, regulon, dc$xcell[CELLS, ])
     tab <- data.frame(Regulon = names(mrs_own$es$nes),

@@ -24,6 +24,10 @@ rule all:
         "results/robustness/viper_collectri.rda",
         "results/robustness/deconvolution_mra.rda",
         "results/enrichment/fgsea_regulons.rda",
+        "results/enrichment/ORA_nonconsensus.tsv",
+        "results/robustness/composition_reported.tsv",
+        "results/integration/Table1_MR_summary.tsv",
+        "results/Supplementary_Tables_S1-S7.xlsx",
 
 
 # ── Descargas ────────────────────────────────────────────────────────────────
@@ -172,6 +176,14 @@ rule ora_regulons:
     log: "logs/ora_regulons.log"
     shell: "{R} scripts/ora_regulons.R > {log} 2>&1"
 
+rule ora_nonconsensus:
+    input: "results/mra/mra_GSE51092.rda"
+    output:
+        "results/enrichment/ORA_nonconsensus.tsv",
+        "results/enrichment/ORA_nonconsensus.rda",
+    log: "logs/ora_nonconsensus.log"
+    shell: "{R} scripts/ora_nonconsensus.R > {log} 2>&1"
+
 rule compare_de:
     input: "results/de/DE_limma_GSE51092.txt", "results/de/DE_limma_GSE84844.txt"
     output:
@@ -266,6 +278,12 @@ rule deconvolution:
     log: "logs/deconvolution.log"
     shell: "{R} scripts/deconvolution_mra.R > {log} 2>&1"
 
+rule composition_reported:
+    input: "results/robustness/deconv_composition_tests.txt"
+    output: "results/robustness/composition_reported.tsv"
+    log: "logs/composition_reported.log"
+    shell: "{R} scripts/composition_reported.R > {log} 2>&1"
+
 rule fgsea_regulons:
     input: MRA, CORTO, CONSENSUS
     output:
@@ -275,3 +293,34 @@ rule fgsea_regulons:
         "results/enrichment/fgsea_regulons.rda",
     log: "logs/fgsea_regulons.log"
     shell: "{R} scripts/fgsea_regulons.R > {log} 2>&1"
+
+
+# ── Tabla 1 del texto principal ──────────────────────────────────────────────
+rule table1_mr_summary:
+    input:
+        "results/mra/mra_GSE51092.rda",
+        "results/integration/MRs_meta_shared.txt",
+        "results/integration/DE_meta_shared.txt",
+        "results/enrichment/ORA_GO_BP.txt",
+        "results/enrichment/ORA_Reactome.txt",
+        "results/robustness/consensus_vs_collectri.txt",
+    output: "results/integration/Table1_MR_summary.tsv"
+    log: "logs/table1_mr_summary.log"
+    shell: "{R} scripts/table1_mr_summary.R > {log} 2>&1"
+
+
+# ── Libro de Tablas Suplementarias S1–S7 ─────────────────────────────────────
+rule supplementary_tables:
+    input:
+        "results/validation/Table_S1_DE_GSE66795_replication.xlsx",
+        "results/integration/MRs_meta_shared.txt",
+        "results/integration/DE_meta_shared.txt",
+        "results/robustness/viper_cross_network.txt",
+        "results/robustness/viper_collectri.txt",
+        "results/robustness/consensus_vs_collectri.txt",
+        "results/robustness/deconvolution_mra.rda",   # también escribe xcell_* y mcpcounter_*
+        "results/robustness/deconv_composition_tests.txt",
+        "results/enrichment/fgsea_regulons_long.txt",
+    output: "results/Supplementary_Tables_S1-S7.xlsx"
+    log: "logs/supplementary_tables.log"
+    shell: "{R} scripts/supplementary_tables.R > {log} 2>&1"
