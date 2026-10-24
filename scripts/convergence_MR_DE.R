@@ -1,5 +1,3 @@
-# setwd("path/to/sjogren_MRA")  # set to repo root if not using an R project
-
 # Carpetas de salida
 invisible(lapply(c("results/integration"),
                  dir.create, recursive = TRUE, showWarnings = FALSE))

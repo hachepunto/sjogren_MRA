@@ -21,85 +21,86 @@ Transcription factor list: Lambert et al. 2018 (Cell, PMID: 29425488) — 1,639 
 
 ## Setup
 
-### 1. Download expression matrices
+### R environment
+
+R 4.6 with Bioconductor 3.23. `envs/install_r_packages.R` installs every package the pipeline needs (CRAN, Bioconductor, corto 1.2.4 and the GitHub packages `xCell` and `MCPcounter`); `package_versions.tsv` lists the exact versions used for the manuscript. With conda, for example:
 
 ```bash
-bash get_data.sh
+conda create -n sjogren -c conda-forge r-base=4.6.1 c-compiler cxx-compiler fortran-compiler make cmake pkg-config \
+    libcurl libxml2 openssl zlib icu glpk gmp freetype fontconfig harfbuzz fribidi libpng libjpeg-turbo libtiff cairo imagemagick
+conda activate sjogren      # packages must compile with the environment's own toolchain
+Rscript envs/install_r_packages.R
 ```
 
-Downloads and decompresses the GEO series matrix files into `data/`:
-- `data/GSE51092_series_matrix.txt` (~39 MB)
-- `data/GSE84844_series_matrix.txt` (~38 MB)
-- `data/GSE66795_series_matrix.txt` (~87 MB)
-- `data/GSE140161_series_matrix.txt` (~46 MB)
+The workflow itself needs [Snakemake](https://snakemake.readthedocs.io) (≥ 8) and `curl`; Java and the [ARACNe-AP](https://github.com/califano-lab/ARACNe-AP) jar only if the network is re-inferred.
 
-`ssgsea_GSE140161.R` additionally expects the processed gene-level matrix `data/GSE140161_Processed_data.txt.gz` from the GEO supplementary files.
+### Configuration (`config.yaml`)
 
-### 2. Network inference (ARACNE-AP — server step)
-
-The transcriptional network is inferred from pSS cases only. The full order:
-
-1. Run **`mra_GSE84844.R`** to generate `results/networks/TFs_Lambert2018.txt`
-2. Run **`mra_GSE51092.R`** up to step 3 — this exports `data/SJS_matrix.txt` (the cases-only expression matrix required by ARACNE-AP)
-3. Set the `ARACNE` path in `run_aracne_ap.sh` to your [ARACNe-AP](https://github.com/califano-lab/ARACNe-AP) jar and run:
-   ```bash
-   bash run_aracne_ap.sh
-   ```
-   With the defaults (`N_CORES=75`, `MEM=4G` per bootstrap job) this needs ~300 GB RAM in total; adjust `N_CORES` and `MEM` to your machine. Bootstraps go to `results/networks/aracne_ap_output/`; the consolidated network is copied to `results/networks/sjs_network.txt`.
-4. Continue running **`mra_GSE51092.R`** from step 4 onward
-
-### 3. R dependencies
-
-```r
-install.packages(c("BiocManager", "readr", "tibble", "purrr", "ggplot2", "patchwork",
-                   "RobustRankAggreg", "openxlsx"))
-BiocManager::install(c(
-    "GEOquery", "matrixStats", "limma", "viper", "corto",
-    "clusterProfiler", "ReactomePA", "org.Hs.eg.db", "GSVA"
-))
-```
+| Key | Default | Meaning |
+|-----|---------|---------|
+| `rscript` | `Rscript` | Path to the `Rscript` of the R 4.6 installation |
+| `corto_threads` | `4` | Threads for corto (GSE84844 network) |
+| `run_aracne` | `false` | `false`: use the frozen network in `resources/`; `true`: re-infer it with ARACNe-AP |
+| `aracne_jar` | — | Path to `aracne.jar` (only with `run_aracne: true`) |
+| `aracne_bootstraps`, `aracne_pvalue`, `aracne_mem` | `100`, `1E-8`, `4G` | ARACNe-AP parameters; each bootstrap is one job using `aracne_mem` of RAM |
 
 ---
 
-## Pipeline
+## Running
 
-Run scripts in order from the repository root (`Rscript script.R`, or source them from an R session whose working directory is the repo root). Every script creates the `results/` subfolders it needs, so no manual setup is required.
+```bash
+snakemake --cores 8                         # full pipeline with the frozen ARACNe-AP network
+snakemake --cores 75 --config run_aracne=true aracne_jar=/path/to/aracne.jar   # re-infer the network
+snakemake -n                                # dry run: list pending jobs
+```
 
-| Step | Script | Reads | Writes |
-|------|--------|-------|--------|
-| 0 | `get_data.sh` | — | `data/*_series_matrix.txt` |
-| 1 | `mra_GSE84844.R` | `data/GSE84844_series_matrix.txt`, Lambert CSV | `results/networks/TFs_Lambert2018.txt`, `results/networks/regulon_GSE84844_corto.rda`, `results/mra/mra_GSE84844.rda`, `results/mra/top100_MRs_GSE84844.txt`, `results/de/DE_limma_GSE84844.txt` |
-| 2a | `mra_GSE51092.R` (steps 1–3) | `data/GSE51092_series_matrix.txt` | `data/SJS_matrix.txt` |
-| 2b | `run_aracne_ap.sh` | `data/SJS_matrix.txt`, `results/networks/TFs_Lambert2018.txt` | `results/networks/sjs_network.txt` (server) |
-| 2c | `mra_GSE51092.R` (steps 4–8) | `results/networks/sjs_network.txt` | `results/mra/mra_GSE51092.rda`, `results/mra/top100_MRs_GSE51092.txt`, `results/de/DE_limma_GSE51092.txt`, `results/figures/Top10_MRs_GSE51092.pdf` |
-| 3 | `compare_MRs.R` | `results/mra/mra_*.rda` | `results/integration/MRs_comparacion.txt`, `results/integration/MRs_RRA_{activated,repressed}.txt`, `results/integration/comparison_results.rda`, `results/figures/MRs_scatter_NES.pdf` |
-| 4 | `meta_MRs.R` | `results/integration/MRs_comparacion.txt`, `MRs_RRA_*.txt` | `results/integration/MRs_meta_shared.txt`, `results/integration/MRs_concordance_tests.txt`, `results/integration/meta_MRs_results.rda` |
-| 5 | `figure_MRs.R` | `results/integration/comparison_results.rda`, `MRs_meta_shared.txt` | `results/figures/MRs_integrative_figure.pdf` |
-| 6 | `ora_regulons.R` | `results/mra/mra_GSE51092.rda`, `results/integration/MRs_meta_shared.txt` | `results/enrichment/ORA_{GO_BP,Reactome}.txt`, `results/enrichment/ORA_results.rda`, `results/figures/ORA_combined.pdf` |
-| 7 | `compare_ED.R` | `results/de/DE_limma_GSE{51092,84844}.txt` | `results/de/DE_comparacion.txt`, `results/de/DE_RRA_{up,down}regulated.txt`, `results/de/DE_replicated_{up,down}.txt`, `results/de/comparison_DE_results.rda`, `results/enrichment/DE_ORA_{GO_BP,Reactome}.txt`, `results/figures/DE_integrative_figure.pdf` |
-| 8 | `meta_DE.R` | `results/de/DE_comparacion.txt`, `DE_RRA_*.txt` | `results/integration/DE_meta_shared.txt`, `results/integration/meta_DE_results.rda` |
-| 9 | `convergence_MR_DE.R` | `results/integration/MRs_meta_shared.txt`, `DE_meta_shared.txt` | `results/integration/MR_DE_convergence.txt`, `results/integration/MR_DE_convergence_summary.txt` |
-| 10 | `de_GSE66795.R` | `data/GSE66795_series_matrix.txt`, `results/de/comparison_DE_results.rda` | `results/validation/DE_limma_GSE66795.txt`, `results/validation/DE_GSE66795_replication.rda`, `results/validation/Table_S1_DE_GSE66795_replication.xlsx` |
-| 11 | `ssgsea_GSE140161.R` | `data/GSE140161_Processed_data.txt.gz`, `results/de/DE_replicated_up.txt` | `results/validation/ssGSEA_GSE140161_scores_replicated.txt`, `results/validation/ssGSEA_GSE140161_replicated.rda`, `results/figures/ssGSEA_GSE140161_replicated.pdf` |
-| 12 | `viper_cross_network.R` | `results/mra/mra_*.rda`, `results/networks/regulon_GSE84844_corto.rda`, `results/integration/MRs_meta_shared.txt` | `results/robustness/viper_cross_network{.txt,_concordance.txt,.rda}` |
-| 13 | `viper_collectri.R` | `data/collectri_regulons_human.tsv`, `results/mra/mra_*.rda`, `MRs_meta_shared.txt` | `results/robustness/viper_collectri{.txt,_concordance.txt,.rda}`, `results/robustness/consensus_vs_collectri.txt` |
-| 14 | `deconvolution_mra.R` | `results/mra/mra_*.rda`, corto regulon, `MRs_meta_shared.txt` | `results/robustness/xcell_*.txt`, `mcpcounter_*.txt`, `deconv_composition_tests.txt`, `mra_adjusted_composition.txt`, `mra_adjusted_concordance.txt`, `deconvolution_mra.rda` |
-| 15 | `fgsea_regulons.R` | `results/mra/mra_*.rda`, corto regulon, `MRs_meta_shared.txt` | `results/enrichment/fgsea_regulons_{long,wide}.txt`, `fgsea_vs_viper_concordance.txt`, `fgsea_regulons.rda` |
+Snakemake downloads the GEO series matrices, the GSE140161 processed matrix and the Lambert et al. TF table into `data/`, runs every step in dependency order and writes one log per step to `logs/`. Every script can also be run on its own from the repository root (`Rscript scripts/<name>.R`) once its inputs exist.
 
-Steps 3–5 form a chain: `compare_MRs.R` writes the shared-TF table that `meta_MRs.R` integrates, and `figure_MRs.R` draws the final figure from both outputs. Steps 7–8 are likewise sequential (`meta_DE.R` reads `DE_comparacion.txt` from `compare_ED.R`; `compare_ED.R` does not read anything from `meta_DE.R`). Step 9 needs both chains. Steps 6, 10 and 11 only need the outputs listed in their "Reads" column.
+### Frozen resources (`resources/`)
 
-Note for OneDrive-synced checkouts: `pdf()` can occasionally fail at `dev.off()` with `write failed` while the sync client holds the file; rerun the script or write the figure to a local folder and copy it into `results/figures/`.
+| File | Contents |
+|------|----------|
+| `sjs_network_aracne.txt.gz` | Consolidated ARACNe-AP network of GSE51092 (190 pSS cases, Lambert TFs, p < 1e-8, 100 bootstraps with seeds 1–100) |
+| `probe_map_GSE51092_2019.tsv` | Gene → Illumina probe assignment used to build the ARACNe-AP input (12,176 genes; see below) |
+| `collectri_regulons_human.tsv` | CollecTRI TF–target table from OmniPath (`https://omnipathdb.org/interactions?datasets=collectri&organisms=9606&genesymbols=1`, academic license; complexes removed, `mor = -1` for inhibition-only edges) |
+
+The consolidated network is shipped with the repository so that the MRA can be run without Java or a large server; `run_aracne=true` regenerates it from `results/networks/SJS_matrix.txt` (about 10 min with `--cores 75`: each bootstrap is declared as 3 threads, since the JVM uses ~2.2 CPUs, and 4 GB RAM). The regenerated network has the same edges and p-values as the shipped one; MI values agree to ~1e-15 (order of summation across bootstraps).
+
+**ARACNe-AP input and gene names.** The ARACNe-AP input matrix (190 pSS cases) comes from the original 2019 preprocessing of GSE51092, in which each Illumina probe was assigned to an HGNC symbol current at that time (likely via g:Profiler g:Convert); the exact assignment rule could not be recovered. `probe_map_GSE51092_2019.tsv` records that assignment, and `prep_GSE51092.R` rebuilds the input byte for byte from the GEO series matrix with it: every value is an unmodified GEO probe value. The expression matrix used for the signature, differential expression and MRA (`eset`) instead collapses probes by the platform `Symbol` annotation (11,409 genes). Because both use different gene names, `aracne2regulon()` keeps only network edges between genes named identically in both (7,900 of the 12,136 genes in the network).
+
+### Steps
+
+| Script | Purpose | Main outputs |
+|--------|---------|--------------|
+| `tf_list_lambert.R` | Lambert et al. 2018 TF list (1,639 TFs) | `results/networks/TFs_Lambert2018.txt` |
+| `prep_GSE51092.R` | GSE51092 probe collapse and labels; cases-only ARACNe-AP input from the 2019 probe map | `results/mra/eset_GSE51092.rda`, `results/networks/SJS_matrix.txt` |
+| `mra_GSE51092.R` | msVIPER with the ARACNe-AP regulon; limma | `results/mra/mra_GSE51092.rda`, `results/de/DE_limma_GSE51092.txt`, `results/figures/Top10_MRs_GSE51092.pdf` |
+| `mra_GSE84844.R` | corto network, msVIPER; limma | `results/networks/regulon_GSE84844_corto.rda`, `results/mra/mra_GSE84844.rda`, `results/de/DE_limma_GSE84844.txt` |
+| `compare_MRs.R` | Shared-TF table, RRA over the union of regulators | `results/integration/MRs_comparacion.txt`, `comparison_results.rda` |
+| `meta_MRs.R` | Stouffer + restricted RRA over shared TFs (consensus MRs) | `results/integration/MRs_meta_shared.txt`, `MRs_concordance_tests.txt` |
+| `figure_MRs.R` | Figure 3 | `results/figures/MRs_integrative_figure.pdf` |
+| `ora_regulons.R` | ORA of consensus regulon targets (Figure 4) | `results/enrichment/ORA_*.txt`, `results/figures/ORA_combined.pdf` |
+| `compare_ED.R` | Replicated DE genes, ORA | `results/de/DE_replicated_{up,down}.txt`, `comparison_DE_results.rda` |
+| `figure_DE.R` | Figure 5 | `results/figures/DE_integrative_figure.pdf` |
+| `meta_DE.R` | Stouffer + restricted RRA over shared genes | `results/integration/DE_meta_shared.txt` |
+| `convergence_MR_DE.R` | Consensus MRs that are also replicated DE genes | `results/integration/MR_DE_convergence{,_summary}.txt` |
+| `de_GSE66795.R` | Replication of DE genes in GSE66795 (Table S1) | `results/validation/Table_S1_DE_GSE66795_replication.xlsx` |
+| `ssgsea_GSE140161.R` | ssGSEA of the replicated up signature in GSE140161 | `results/validation/ssGSEA_GSE140161_scores_replicated.txt`, `results/figures/ssGSEA_GSE140161_replicated.pdf` |
+| `viper_cross_network.R` | Robustness: VIPER with the other cohort's network | `results/robustness/viper_cross_network*.txt` |
+| `viper_collectri.R` | Robustness: VIPER with CollecTRI regulons | `results/robustness/viper_collectri*.txt`, `consensus_vs_collectri.txt` |
+| `deconvolution_mra.R` | Robustness: cell composition (xCell, MCP-counter) and composition-adjusted MRA | `results/robustness/deconv_composition_tests.txt`, `mra_adjusted_*.txt` |
+| `fgsea_regulons.R` | Robustness: fgsea of regulons vs VIPER | `results/enrichment/fgsea_regulons_*.txt`, `fgsea_vs_viper_concordance.txt` |
+
+`scripts/helpers.R` holds the shared probe-collapsing and MR-table functions. The full input/output graph is in the `Snakefile` (`snakemake --dag | dot -Tpdf > dag.pdf`).
 
 ---
-
-Steps 12–15 are robustness analyses added during peer review; they only need the `.rda` objects from steps 1–4. `data/collectri_regulons_human.tsv` is the CollecTRI TF–target table from OmniPath (`https://omnipathdb.org/interactions?datasets=collectri&organisms=9606&genesymbols=1`, academic license; complexes removed, `mor = -1` for inhibition-only edges), and steps 13–14 additionally require `decoupleR`/`OmnipathR` (optional, only to re-download CollecTRI), `fgsea`, `xCell` (GitHub `dviraran/xCell`) and `MCPcounter` (GitHub `ebecht/MCPcounter`).
 
 ## Output layout (`results/`, git-ignored)
 
 | Folder | Contents |
 |--------|----------|
-| `results/networks/` | TF list used by ARACNE-AP, consolidated ARACNE-AP network (`sjs_network.txt`), corto regulon (`regulon_GSE84844_corto.rda`) |
-| `results/mra/` | `mra_GSE51092.rda`, `mra_GSE84844.rda`, `top100_MRs_*.txt` |
+| `results/networks/` | TF list, cases-only GSE51092 matrix (`SJS_matrix.txt`), ARACNE-AP network (`sjs_network.txt`; bootstraps in `aracne/` when re-inferred), corto regulon (`regulon_GSE84844_corto.rda`) |
+| `results/mra/` | `eset_GSE51092.rda`, `mra_GSE51092.rda`, `mra_GSE84844.rda`, `top100_MRs_*.txt` |
 | `results/de/` | Per-cohort limma tables, shared-gene comparison, RRA lists, replicated gene lists, `comparison_DE_results.rda` |
 | `results/integration/` | Cross-cohort MR integration (`MRs_meta_shared.txt`, `MRs_concordance_tests.txt`, `comparison_results.rda`, `meta_MRs_results.rda`), DE integration (`DE_meta_shared.txt`, `meta_DE_results.rda`), MR/DE convergence tables |
 | `results/enrichment/` | ORA tables and objects for MR regulons (`ORA_*`) and for replicated DE genes (`DE_ORA_*`) |
@@ -107,14 +108,12 @@ Steps 12–15 are robustness analyses added during peer review; they only need t
 | `results/robustness/` | Cross-network VIPER, CollecTRI VIPER, composition-adjusted MRA (steps 12–14) |
 | `results/figures/` | All PDF figures |
 
-`package_versions.tsv` is maintained by hand (full package list with versions and the R version), stays in the repository root and is tracked for reproducibility; the MRA scripts no longer overwrite it.
-
 ### Key objects
 
 | File | Contents |
 |------|----------|
 | `results/mra/mra_GSE51092.rda` | `mrs_gse51092`, `regulon_gse51092`, `eset`, `disease`, `de_gse51092`, `top_mrs` |
-| `results/mra/mra_GSE84844.rda` | `mrs_gse84844`, `de_gse84844`, `top_mrs`, `eset`, `disease` (older files lack `eset`; `helpers_eset.R` rebuilds it on demand) |
+| `results/mra/mra_GSE84844.rda` | `mrs_gse84844`, `de_gse84844`, `top_mrs`, `eset`, `disease` |
 | `results/integration/comparison_results.rda` | `shared` (TFs with a regulon in both networks), RRA results (`rra_act`, `rra_rep`) |
 | `results/integration/meta_MRs_results.rda` | Stouffer + restricted RRA over shared TFs (`sh`, `concordance`) |
 | `results/de/comparison_DE_results.rda` | `shared` genes with Stouffer z, replicated sets (`sig_up`, `sig_dn`), ORA objects |

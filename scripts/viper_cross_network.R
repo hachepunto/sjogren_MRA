@@ -1,7 +1,5 @@
 library(viper)
 
-# setwd("path/to/sjogren_MRA")  # set to repo root if not using an R project
-
 # Validación cruzada red/firma (Reviewer 1, punto 4): la actividad de cada TF
 # se estima con la red inferida en la OTRA cohorte, de modo que la red y la
 # firma de expresión nunca provienen de las mismas muestras.
@@ -17,9 +15,8 @@ e <- new.env()
 load("results/mra/mra_GSE51092.rda", envir = e)   # mrs_gse51092, regulon_gse51092, eset, disease
 eset51 <- e$eset; dis51 <- e$disease; reg51 <- e$regulon_gse51092; mrs51 <- e$mrs_gse51092
 e <- new.env()
-load("results/mra/mra_GSE84844.rda", envir = e)   # mrs_gse84844 (+ eset, disease si es reciente)
+load("results/mra/mra_GSE84844.rda", envir = e)   # mrs_gse84844, eset, disease
 mrs84 <- e$mrs_gse84844
-if (is.null(e$eset)) { source("helpers_eset.R"); e <- get_eset_gse84844() }
 eset84 <- e$eset; dis84 <- e$disease
 e <- new.env()
 load("results/networks/regulon_GSE84844_corto.rda", envir = e)   # regulon_gse84844

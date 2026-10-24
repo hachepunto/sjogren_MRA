@@ -2,8 +2,6 @@ library(readr)
 library(GSVA)
 library(ggplot2)
 
-# setwd("path/to/sjogren_MRA")  # set to repo root if not using an R project
-
 # Carpetas de salida
 invisible(lapply(c("results/validation", "results/figures"),
                  dir.create, recursive = TRUE, showWarnings = FALSE))

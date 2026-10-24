@@ -1,0 +1,13 @@
+# Rscript con R 4.6 / Bioconductor 3.23 (ver envs/install_r_packages.R)
+rscript: Rscript
+
+# Hilos para corto (red de GSE84844)
+corto_threads: 4
+
+# ARACNE-AP: false usa la red congelada resources/sjs_network_aracne.txt.gz;
+# true la infiere desde cero (~10 min con --cores 75; 3 hilos y 4 GB por bootstrap)
+run_aracne: false
+aracne_jar: /path/to/ARACNe-AP/dist/aracne.jar
+aracne_bootstraps: 100
+aracne_pvalue: 1E-8
+aracne_mem: 4G

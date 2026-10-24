@@ -1,10 +1,8 @@
 library(viper)
 
-# setwd("path/to/sjogren_MRA")  # set to repo root if not using an R project
-
 # Validación con interactoma externo curado (Review 4, punto M3): VIPER sobre
 # las firmas pSS vs control de ambas cohortes usando los regulones de CollecTRI
-# (OmniPath, licencia académica; data/collectri_regulons_human.tsv, descargado
+# (OmniPath, licencia académica; resources/collectri_regulons_human.tsv, descargado
 # de https://omnipathdb.org/interactions?datasets=collectri&organisms=9606,
 # complejos excluidos, mor = -1 si solo inhibición, +1 en otro caso).
 # Los regulones curados son más pequeños que los inferidos, por lo que se usa
@@ -15,7 +13,7 @@ set.seed(1)
 MINSIZE <- 10
 
 # ── 1. Regulón CollecTRI en formato viper ────────────────────────────────────
-ct <- read.delim("data/collectri_regulons_human.tsv")
+ct <- read.delim("resources/collectri_regulons_human.tsv")
 build_regulon <- function(ct, genes) {
     ct <- ct[ct$target %in% genes & ct$source != ct$target, ]
     sp <- split(ct, ct$source)
@@ -45,7 +43,6 @@ ct51  <- run_msviper(e$eset, e$disease, reg51)
 size51 <- sapply(reg51, function(r) length(r$tfmode))
 
 e <- new.env(); load("results/mra/mra_GSE84844.rda", envir = e)
-if (is.null(e$eset)) { source("helpers_eset.R"); e <- get_eset_gse84844() }
 reg84 <- build_regulon(ct, rownames(e$eset))
 ct84  <- run_msviper(e$eset, e$disease, reg84)
 size84 <- sapply(reg84, function(r) length(r$tfmode))

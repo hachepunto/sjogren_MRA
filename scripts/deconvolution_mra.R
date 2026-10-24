@@ -3,8 +3,6 @@ library(MCPcounter)
 library(limma)
 library(viper)
 
-# setwd("path/to/sjogren_MRA")  # set to repo root if not using an R project
-
 # Análisis de sensibilidad a la composición celular (Review 4, punto M1).
 # Sangre total: la firma pSS vs control mezcla cambios por célula y cambios de
 # proporciones. Se estiman proporciones relativas con xCell (y MCP-counter como
@@ -69,7 +67,6 @@ rm(e)
 # ── 2. GSE84844 ───────────────────────────────────────────────────────────────
 e <- new.env(); load("results/mra/mra_GSE84844.rda", envir = e)
 mrs84 <- e$mrs_gse84844
-if (is.null(e$eset)) { source("helpers_eset.R"); e <- get_eset_gse84844() }
 e2 <- new.env(); load("results/networks/regulon_GSE84844_corto.rda", envir = e2)
 r84 <- run_cohort(e$eset, e$disease, e2$regulon_gse84844, mrs84, "GSE84844")
 rm(e, e2)
