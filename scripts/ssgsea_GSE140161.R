@@ -2,20 +2,33 @@ library(readr)
 library(GSVA)
 library(ggplot2)
 
-# setwd("path/to/sjogren_MRA")  # set to repo root if not using an R project
+# Carpetas de salida
+invisible(lapply(c("results/validation", "results/figures"),
+                 dir.create, recursive = TRUE, showWarnings = FALSE))
 
 # ── 1. Processed gene-level expression matrix (GSE140161) ─────────────────────
-# GSE140161_Processed_data.txt.gz: gene symbols in col 1 (no column header),
-# 350 pSS patient samples in cols 2-351. No healthy controls in this dataset.
-proc    <- read_tsv("data/GSE140161_Processed_data.txt.gz",
-                    show_col_types = FALSE)
-eset    <- as.matrix(proc[, -1])
+# GSE140161_Processed_data.txt.gz: símbolos en la col 1 (sin nombre de columna)
+# y 351 pacientes pSS en las cols 2-352. La cabecera tiene 351 nombres y cada
+# fila 352 campos, así que read_tsv() corría las etiquetas una posición y
+# perdía la última muestra; se lee la cabecera por separado. Sin controles.
+con  <- gzfile("data/GSE140161_Processed_data.txt.gz")
+hdr  <- strsplit(readLines(con, n = 1), "\t")[[1]]
+close(con)
+proc <- read.delim("data/GSE140161_Processed_data.txt.gz", header = FALSE,
+                   skip = 1, check.names = FALSE)
+stopifnot(ncol(proc) == length(hdr) + 1)
+eset <- as.matrix(proc[, -1])
 rownames(eset) <- proc[[1]]
+colnames(eset) <- hdr
 storage.mode(eset) <- "double"
+stopifnot(!anyNA(eset))
 
-# ── 2. IFN-up gene set (RRA 636-gene upregulated signature) ───────────────────
-rra_up   <- read_tsv("DE_RRA_upregulated.txt", show_col_types = FALSE)
-gene_set <- rra_up$Name[rra_up$Name %in% rownames(eset)]  # 576 / 636 present
+# ── 2. Firma: genes up replicados (FDR < 0.05 en GSE51092 y GSE84844) ────────
+sig_file <- "results/de/DE_replicated_up.txt"
+suffix   <- "_replicated"
+sig_up   <- read_tsv(sig_file, show_col_types = FALSE)
+n_sig    <- nrow(sig_up)
+gene_set <- sig_up$gene[sig_up$gene %in% rownames(eset)]
 
 # ── 3. ssGSEA (Barbie et al. 2009, per-sample enrichment) ────────────────────
 param  <- ssgseaParam(exprData  = eset,
@@ -28,7 +41,7 @@ names(scores) <- colnames(eset)
 
 write_tsv(data.frame(sample      = names(scores),
                      ssGSEA_score = scores),
-          "ssGSEA_GSE140161_scores.txt")
+          paste0("results/validation/ssGSEA_GSE140161_scores", suffix, ".txt"))
 
 print(summary(scores))
 
@@ -46,12 +59,12 @@ p <- ggplot(df_plot, aes(x = score)) +
          y = "Density",
          title = paste0("IFN-up signature enrichment in GSE140161\n",
                         "(n = ", ncol(eset), " pSS patients, ",
-                        length(gene_set), "/636 signature genes present)")) +
+                        length(gene_set), "/", n_sig, " signature genes present)")) +
     theme_bw(base_size = 11)
 
-pdf("ssGSEA_GSE140161.pdf", width = 6, height = 5)
+pdf(paste0("results/figures/ssGSEA_GSE140161", suffix, ".pdf"), width = 6, height = 5)
 print(p)
 dev.off()
 
 # ── 5. Save ───────────────────────────────────────────────────────────────────
-save(eset, scores, gene_set, file = "ssGSEA_GSE140161.rda")
+save(eset, scores, gene_set, n_sig, file = paste0("results/validation/ssGSEA_GSE140161", suffix, ".rda"))

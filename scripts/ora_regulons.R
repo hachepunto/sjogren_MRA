@@ -2,18 +2,20 @@ library(clusterProfiler)
 library(ReactomePA)
 library(org.Hs.eg.db)
 
-# setwd("path/to/sjogren_MRA")  # set to repo root if not using an R project
+# Carpetas de salida
+invisible(lapply(c("results/enrichment", "results/figures"),
+                 dir.create, recursive = TRUE, showWarnings = FALSE))
 
-load("mra_GSE51092.rda")        # regulon_gse51092, eset
-load("comparison_results.rda")  # rra_act, rra_rep
+load("results/mra/mra_GSE51092.rda")                 # regulon_gse51092, eset
+cons <- read.delim("results/integration/MRs_meta_shared.txt")  # de meta_MRs.R
 
-# ── 1. MRs a analizar (top 5 por dirección) ───────────────────────────────────
-top10_act <- as.character(rra_act$Name[1:10])
-top10_rep <- as.character(rra_rep$Name[1:10])
-all_mrs  <- c(top10_act, top10_rep)
-
-cat("Activados:", paste(top10_act, collapse = ", "), "\n")
-cat("Reprimidos:", paste(top10_rep, collapse = ", "), "\n")
+# ── 1. MRs a analizar: consenso entre cohortes (Stouffer, BH < 0.10, mismo signo) ─
+# Sustituye el top 10 + 10 por RRA de la versión sometida: el criterio de
+# selección es ahora el mismo que define la lista de consenso del manuscrito.
+cons    <- cons[cons$BH_stouffer < 0.10 & cons$direction != "discordant", ]
+mrs_act <- cons$Regulon[cons$direction == "activated"]
+mrs_rep <- cons$Regulon[cons$direction == "repressed"]
+all_mrs <- c(mrs_act, mrs_rep)
 
 # Verificar que están en el regulon
 missing <- all_mrs[!all_mrs %in% names(regulon_gse51092)]
@@ -78,12 +80,12 @@ p_react <- dotplot(cc_react, showCategory = 5, font.size = 9) +
 
 combined <- p_go | p_react + plot_layout(widths = c(3, 1))
 
-pdf("ORA_combined.pdf", width = 16, height = 8)
+pdf("results/figures/ORA_combined.pdf", width = 16, height = 8)
 print(combined)
 dev.off()
 
 # ── 7. Guardar resultados ─────────────────────────────────────────────────────
-save(cc_go, cc_react, file = "ORA_results.rda")
-write.table(as.data.frame(cc_go),    "ORA_GO_BP.txt",   sep = "\t", quote = FALSE, row.names = FALSE)
-write.table(as.data.frame(cc_react), "ORA_Reactome.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+save(cc_go, cc_react, file = "results/enrichment/ORA_results.rda")
+write.table(as.data.frame(cc_go),    "results/enrichment/ORA_GO_BP.txt",   sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(as.data.frame(cc_react), "results/enrichment/ORA_Reactome.txt", sep = "\t", quote = FALSE, row.names = FALSE)
 
