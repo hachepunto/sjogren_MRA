@@ -18,8 +18,8 @@ authors:
     affiliation: "Instituto Nacional de Medicina Genómica (INMEGEN), Mexico City, Mexico"
     email: "hatovar@inmegen.gob.mx"
     orcid: "https://orcid.org/0000-0002-8360-6133"
-version: 1.0.0
-date-released: "2026-07-03"
+version: 2.0.0
+date-released: "2026-10-24"
 url: "https://github.com/hachepunto/sjogren_MRA"
 license: GPL-3.0
 preferred-citation:

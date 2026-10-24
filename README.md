@@ -1,6 +1,6 @@
 # Master Regulator Analysis of Primary Sjögren's Syndrome
 
-Transcriptomic analysis of primary Sjögren's syndrome (pSS) in peripheral whole blood using Master Regulator Analysis (MRA) and differential expression across two independent GEO cohorts, with cross-dataset integration (Stouffer meta-analysis and Robust Rank Aggregation) and two supplementary validation cohorts.
+Transcriptomic analysis of primary Sjögren's syndrome (pSS) in peripheral whole blood using Master Regulator Analysis (MRA) and differential expression across two independent GEO cohorts, with cross-dataset integration (Stouffer meta-analysis of regulator activity and replication of differential expression), robustness analyses (exchanged networks, CollecTRI, cell-composition adjustment, fgsea) and two supplementary validation cohorts. The whole pipeline is a Snakemake workflow.
 
 ---
 
@@ -131,7 +131,9 @@ The consolidated network is shipped with the repository so that the MRA can be r
 
 ## Citation
 
-> [Manuscript in preparation]
+Perez-Calixto D, Hernández-Lemus E, Tovar H. *Master Regulator Analysis Reveals a Reproducible Interferon-Centered Regulatory Architecture in Primary Sjögren's Syndrome.* Frontiers in Immunology (under review).
+
+To cite this code, use the metadata in [`CITATION.cff`](CITATION.cff) (GitHub's "Cite this repository" button) or the Zenodo DOI of the release.
 
 ---
 
