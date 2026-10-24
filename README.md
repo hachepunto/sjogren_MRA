@@ -80,7 +80,8 @@ The consolidated network is shipped with the repository so that the MRA can be r
 | `meta_MRs.R` | Stouffer + restricted RRA over shared TFs (consensus MRs) | `results/integration/MRs_meta_shared.txt`, `MRs_concordance_tests.txt` |
 | `figure_MRs.R` | Figure 3 | `results/figures/MRs_integrative_figure.pdf` |
 | `ora_regulons.R` | ORA of consensus regulon targets (Figure 4) | `results/enrichment/ORA_*.txt`, `results/figures/ORA_combined.pdf` |
-| `compare_ED.R` | Replicated DE genes, ORA (Figure 5) | `results/de/DE_replicated_{up,down}.txt`, `comparison_DE_results.rda`, `results/figures/DE_integrative_figure.pdf` |
+| `compare_ED.R` | Replicated DE genes, ORA | `results/de/DE_replicated_{up,down}.txt`, `comparison_DE_results.rda` |
+| `figure_DE.R` | Figure 5 | `results/figures/DE_integrative_figure.pdf` |
 | `meta_DE.R` | Stouffer + restricted RRA over shared genes | `results/integration/DE_meta_shared.txt` |
 | `convergence_MR_DE.R` | Consensus MRs that are also replicated DE genes | `results/integration/MR_DE_convergence{,_summary}.txt` |
 | `de_GSE66795.R` | Replication of DE genes in GSE66795 (Table S1) | `results/validation/Table_S1_DE_GSE66795_replication.xlsx` |

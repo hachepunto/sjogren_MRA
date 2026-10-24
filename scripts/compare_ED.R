@@ -3,11 +3,9 @@ library(readr)
 library(clusterProfiler)
 library(ReactomePA)
 library(org.Hs.eg.db)
-library(ggplot2)
-library(patchwork)
 
 # Carpetas de salida
-invisible(lapply(c("results/de", "results/enrichment", "results/figures"),
+invisible(lapply(c("results/de", "results/enrichment"),
                  dir.create, recursive = TRUE, showWarnings = FALSE))
 
 # ── 1. Cargar resultados DE ───────────────────────────────────────────────────
@@ -112,124 +110,3 @@ write.table(shared[shared$concordant_down, c("gene", "logFC_51", "adj.P.Val_51",
             "results/de/DE_replicated_down.txt", sep = "\t", quote = FALSE, row.names = FALSE)
 save(shared, rra_up, rra_dn, sig_up, sig_dn, ego_de, ereact_de,
      file = "results/de/comparison_DE_results.rda")
-
-# ── 7. Figure (ggplot2 + patchwork) ──────────────────────────────────────────
-# Layout (column-major, nrow=2):   A | C
-#                                  B | D
-# A = scatter (1:1), B = ORA (1:1), C = Up lollipop (0.5:1), D = Down lollipop (0.5:1)
-# Column widths: left=1, right=0.5 → PDF 12×16 gives 8×8 left panels, 4×8 right panels
-
-shared$status <- "Not significant"
-shared$status[xor(shared$sig51, shared$sig84)] <- "FDR < 0.05 one cohort"
-shared$status[shared$sig51 & shared$sig84 &
-              sign(shared$logFC_51) != sign(shared$logFC_84)] <- "Discordant (FDR < 0.05 both, opposite sign)"
-shared$status[shared$concordant_up] <- "Replicated up (FDR < 0.05 both)"
-shared$status[shared$concordant_down] <- "Replicated down (FDR < 0.05 both)"
-shared$status <- factor(shared$status,
-    levels = c("Replicated up (FDR < 0.05 both)", "Replicated down (FDR < 0.05 both)",
-               "FDR < 0.05 one cohort", "Discordant (FDR < 0.05 both, opposite sign)",
-               "Not significant"))
-
-cols_status <- c(
-    "Replicated up (FDR < 0.05 both)"             = "#D73027",
-    "Replicated down (FDR < 0.05 both)"           = "#4575B4",
-    "FDR < 0.05 one cohort"                       = "#FEE090",
-    "Discordant (FDR < 0.05 both, opposite sign)" = "#984EA3",
-    "Not significant"                             = "grey80"
-)
-# Etiquetas solo para los replicados más extremos por z combinado
-shared_sig <- shared[shared$gene %in% c(sig_up, sig_dn), ]
-shared_sig <- shared_sig[order(-abs(shared_sig$z_stouffer)), ][1:60, ]
-
-# Panel A — logFC scatter (1:1, coord_fixed forces equal axis scales)
-pA <- ggplot(shared, aes(logFC_51, logFC_84, fill = status)) +
-    geom_point(shape = 21, color = "white", size = 1.2, alpha = 0.7) +
-    geom_text(data = shared_sig, aes(label = gene, color = status),
-              size = 1.8, vjust = -0.4, show.legend = FALSE) +
-    geom_hline(yintercept = 0, linetype = "dashed", color = "grey60") +
-    geom_vline(xintercept = 0, linetype = "dashed", color = "grey60") +
-    scale_fill_manual(values = cols_status, name = NULL) +
-    scale_color_manual(values = cols_status) +
-    coord_fixed() +
-    labs(x = "logFC — GSE51092 (n=222)", y = "logFC — GSE84844 (n=60)",
-         title = "A   Cross-dataset differential expression") +
-    guides(fill = guide_legend(ncol = 2)) +
-    theme_bw(base_size = 9) +
-    theme(legend.position = "bottom",
-          plot.title      = element_text(face = "bold", size = 10))
-
-# Panel B — ORA combined lollipop with bubbles (1:1)
-ora_go             <- as.data.frame(ego_de)[,    c("Description", "GeneRatio", "Count", "p.adjust")]
-ora_go$Database    <- "GO BP"
-ora_react          <- as.data.frame(ereact_de)[, c("Description", "GeneRatio", "Count", "p.adjust")]
-ora_react$Database <- "Reactome"
-ora_df             <- rbind(ora_go, ora_react)
-ora_df$GeneRatioNum <- sapply(strsplit(ora_df$GeneRatio, "/"),
-                               function(x) as.numeric(x[1]) / as.numeric(x[2]))
-ora_df$Description  <- factor(ora_df$Description,
-                               levels = ora_df$Description[order(ora_df$GeneRatioNum)])
-
-pB <- ggplot(ora_df, aes(x = GeneRatioNum, y = Description)) +
-    geom_segment(aes(x = 0, xend = GeneRatioNum, yend = Description, color = Database),
-                 linewidth = 1.2) +
-    geom_point(aes(size = Count, fill = p.adjust), shape = 21, color = "white") +
-    scale_color_manual(values = c("GO BP" = "#E08533", "Reactome" = "#7B3F9E"),
-                       name = "Database") +
-    scale_fill_gradient(low = "#4575B4", high = "#FEE090", name = "FDR") +
-    scale_size_continuous(name = "Count", range = c(3, 8)) +
-    scale_x_continuous(expand = expansion(mult = c(0, 0.08))) +
-    guides(
-        color = guide_legend(order = 1),
-        fill  = guide_colorbar(order = 2),
-        size  = guide_legend(order = 3,
-                             override.aes = list(fill = "grey50", color = "white"))
-    ) +
-    labs(x = "Gene Ratio", y = NULL,
-         title = "B   Functional enrichment — replicated DE genes") +
-    theme_bw(base_size = 9) +
-    theme(axis.text.y    = element_text(size = 8),
-          plot.title     = element_text(face = "bold", size = 10),
-          legend.position = "left",
-          aspect.ratio    = 1)
-
-# Panel C — Up-regulated lollipop (0.5:1): top 30 replicados por |z Stouffer|
-rep_up      <- shared[shared$concordant_up, ]
-lol_up      <- head(rep_up[order(-abs(rep_up$z_stouffer)), ], 30)
-lol_up$Name <- lol_up$gene
-lol_up$logp <- -log10(lol_up$p_stouffer)
-
-pC <- ggplot(lol_up, aes(x = logp, y = reorder(Name, logp))) +
-    geom_segment(aes(x = 0, xend = logp, yend = reorder(Name, logp)),
-                 color = "#D73027", linewidth = 1) +
-    geom_point(fill = "#D73027", color = "white", shape = 21, size = 2.5) +
-    scale_x_continuous(expand = expansion(mult = c(0, 0.05))) +
-    labs(x = expression(-log[10](italic(p)[Stouffer])), y = NULL,
-         title = "C   Up-regulated in pSS (replicated)") +
-    theme_bw(base_size = 9) +
-    theme(axis.text.y = element_text(size = 7),
-          plot.title  = element_text(face = "bold", size = 10))
-
-# Panel D — Down-regulated lollipop (0.5:1): top 30 replicados por |z Stouffer|
-rep_dn      <- shared[shared$concordant_down, ]
-lol_dn      <- head(rep_dn[order(-abs(rep_dn$z_stouffer)), ], 30)
-lol_dn$Name <- lol_dn$gene
-lol_dn$logp <- -log10(lol_dn$p_stouffer)
-
-pD <- ggplot(lol_dn, aes(x = logp, y = reorder(Name, logp))) +
-    geom_segment(aes(x = 0, xend = logp, yend = reorder(Name, logp)),
-                 color = "#4575B4", linewidth = 1) +
-    geom_point(fill = "#4575B4", color = "white", shape = 21, size = 2.5) +
-    scale_x_continuous(expand = expansion(mult = c(0, 0.05))) +
-    labs(x = expression(-log[10](italic(p)[Stouffer])), y = NULL,
-         title = "D   Down-regulated in pSS (replicated)") +
-    theme_bw(base_size = 9) +
-    theme(axis.text.y = element_text(size = 7),
-          plot.title  = element_text(face = "bold", size = 10))
-
-fig <- pA + pC + pB + pD +
-    plot_layout(ncol = 2, widths = c(1, 0.5), heights = c(1, 1))
-
-pdf("results/figures/DE_integrative_figure.pdf", width = 16, height = 12)
-print(fig)
-dev.off()
-

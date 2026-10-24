@@ -183,9 +183,14 @@ rule compare_de:
         "results/de/comparison_DE_results.rda",
         "results/enrichment/DE_ORA_GO_BP.txt",
         "results/enrichment/DE_ORA_Reactome.txt",
-        "results/figures/DE_integrative_figure.pdf",
     log: "logs/compare_de.log"
     shell: "{R} scripts/compare_ED.R > {log} 2>&1"
+
+rule figure_de:
+    input: "results/de/comparison_DE_results.rda"
+    output: "results/figures/DE_integrative_figure.pdf"
+    log: "logs/figure_de.log"
+    shell: "{R} scripts/figure_DE.R > {log} 2>&1"
 
 rule meta_de:
     input:
