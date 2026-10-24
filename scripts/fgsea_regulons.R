@@ -1,8 +1,6 @@
 library(fgsea)
 library(viper)
 
-# setwd("path/to/sjogren_MRA")  # set to repo root if not using an R project
-
 # Enriquecimiento por rangos de los regulones completos sobre la firma de
 # expresión de cada cohorte (Review 4, punto M2): complementa a VIPER con un
 # estadístico independiente (fgsea multinivel) y p ajustada por BH sobre todos
@@ -54,7 +52,6 @@ rm(e)
 # ── 2. GSE84844: firma propia x regulones corto ──────────────────────────────
 e <- new.env(); load("results/mra/mra_GSE84844.rda", envir = e)
 nes84 <- e$mrs_gse84844$es$nes
-if (is.null(e$eset)) { source("helpers_eset.R"); e <- get_eset_gse84844() }
 st84 <- ges(e$eset, e$disease)
 e2 <- new.env(); load("results/networks/regulon_GSE84844_corto.rda", envir = e2)
 sets84 <- split_regulon(e2$regulon_gse84844, names(st84))

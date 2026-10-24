@@ -1,7 +1,5 @@
 library(viper)
 
-# setwd("path/to/sjogren_MRA")  # set to repo root if not using an R project
-
 # Carpetas de salida
 dir.create("results/figures", recursive = TRUE, showWarnings = FALSE)
 

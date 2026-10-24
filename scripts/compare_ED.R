@@ -6,8 +6,6 @@ library(org.Hs.eg.db)
 library(ggplot2)
 library(patchwork)
 
-# setwd("path/to/sjogren_MRA")  # set to repo root if not using an R project
-
 # Carpetas de salida
 invisible(lapply(c("results/de", "results/enrichment", "results/figures"),
                  dir.create, recursive = TRUE, showWarnings = FALSE))
@@ -15,7 +13,6 @@ invisible(lapply(c("results/de", "results/enrichment", "results/figures"),
 # ── 1. Cargar resultados DE ───────────────────────────────────────────────────
 de51 <- as.data.frame(read_tsv("results/de/DE_limma_GSE51092.txt"))
 de84 <- as.data.frame(read_tsv("results/de/DE_limma_GSE84844.txt"))
-
 
 # ── 2. Genes compartidos y tabla comparativa ──────────────────────────────────
 shared <- merge(
@@ -235,5 +232,4 @@ fig <- pA + pC + pB + pD +
 pdf("results/figures/DE_integrative_figure.pdf", width = 16, height = 12)
 print(fig)
 dev.off()
-
 

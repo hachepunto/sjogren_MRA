@@ -1,33 +1,18 @@
 library(GEOquery)
-library(matrixStats)
 library(limma)
 library(tibble)
 library(readr)
 library(openxlsx)
 
-# setwd("path/to/sjogren_MRA")  # set to repo root if not using an R project
+source("scripts/helpers.R")
 
 # Carpetas de salida
 invisible(lapply(c("results/validation"),
                  dir.create, recursive = TRUE, showWarnings = FALSE))
 
 # ── 1. Expression matrix (47323 probes → genes × 160 samples) ────────────────
-gse     <- getGEO(filename = "data/GSE66795_series_matrix.txt", GSEMatrix = TRUE)
-eset    <- exprs(gse)
-symbols <- fData(gse)[["Symbol"]]
-
-keep    <- !is.na(symbols) & symbols != "" & !grepl("///", symbols)
-eset    <- eset[keep, ]
-symbols <- symbols[keep]
-
-eset <- do.call(rbind, lapply(
-    split(seq_len(nrow(eset)), symbols),
-    function(idx) {
-        if (length(idx) == 1) return(eset[idx, , drop = FALSE])
-        eset[idx[which.max(rowMedians(eset[idx, , drop = FALSE]))], , drop = FALSE]
-    }
-))
-rownames(eset) <- sort(unique(symbols))
+gse  <- getGEO(filename = "data/GSE66795_series_matrix.txt", GSEMatrix = TRUE, destdir = "data")
+eset <- collapse_probes(exprs(gse), fData(gse)[["Symbol"]])
 
 # ── 2. Disease labels ─────────────────────────────────────────────────────────
 # pData[["patient group:ch1"]]: "Control" (29) | "Patient" (131, all fatigue subgroups)
