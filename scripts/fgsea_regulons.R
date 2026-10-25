@@ -1,8 +1,10 @@
 library(fgsea)
 library(viper)
 
+source("scripts/helpers.R")
+
 # Enriquecimiento por rangos de los regulones completos sobre la firma de
-# expresión de cada cohorte (Review 4, punto M2): complementa a VIPER con un
+# expresión de cada cohorte: complementa a VIPER con un
 # estadístico independiente (fgsea multinivel) y p ajustada por BH sobre todos
 # los regulones. Cada regulón se divide en blancos de modo positivo y negativo
 # (fgsea no admite conjuntos con signo); el NES del conjunto positivo debe ir
@@ -12,11 +14,6 @@ dir.create("results/enrichment", recursive = TRUE, showWarnings = FALSE)
 set.seed(1)
 MINSIZE <- 10
 
-ges <- function(eset, disease) {
-    cases <- which(disease == "pSS"); ctrls <- which(disease == "control")
-    s <- rowTtest(eset[, cases], eset[, ctrls])
-    (qnorm(s$p.value / 2, lower.tail = FALSE) * sign(s$statistic))[, 1]
-}
 split_regulon <- function(reg, genes) {
     sets <- list()
     for (tf in names(reg)) {
@@ -41,9 +38,9 @@ run_fgsea <- function(stats, sets, label) {
     res[, c("cohort", "Regulon", "mode", "size", "NES", "NES_oriented", "pval", "padj")]
 }
 
-# ── 1. GSE51092: firma propia x regulones ARACNE-AP ──────────────────────────
+# ── 1. GSE51092: firma propia x regulones ARACNe-AP ──────────────────────────
 e <- new.env(); load("results/mra/mra_GSE51092.rda", envir = e)
-st51  <- ges(e$eset, e$disease)
+st51  <- signature_z(e$eset, e$disease)
 sets51 <- split_regulon(e$regulon_gse51092, names(st51))
 fg51  <- run_fgsea(st51, sets51, "GSE51092")
 nes51 <- e$mrs_gse51092$es$nes
@@ -52,7 +49,7 @@ rm(e)
 # ── 2. GSE84844: firma propia x regulones corto ──────────────────────────────
 e <- new.env(); load("results/mra/mra_GSE84844.rda", envir = e)
 nes84 <- e$mrs_gse84844$es$nes
-st84 <- ges(e$eset, e$disease)
+st84 <- signature_z(e$eset, e$disease)
 e2 <- new.env(); load("results/networks/regulon_GSE84844_corto.rda", envir = e2)
 sets84 <- split_regulon(e2$regulon_gse84844, names(st84))
 fg84  <- run_fgsea(st84, sets84, "GSE84844")
@@ -72,8 +69,7 @@ concordance <- data.frame(cohort = c("GSE51092", "GSE84844"),
                                 ct(fg84 |> transform(NES_viper = nes84[Regulon]))))
 
 # ── 4. Resumen por regulón: consenso y regulones de una sola red ─────────────
-cons <- read.delim("results/integration/MRs_meta_shared.txt")
-cons <- cons[cons$BH_stouffer < 0.10 & cons$direction != "discordant", ]
+cons <- read_consensus()
 wide <- reshape(fg[fg$mode == "pos", c("cohort", "Regulon", "NES", "padj")],
                 idvar = "Regulon", timevar = "cohort", direction = "wide")
 wide$consensus <- wide$Regulon %in% cons$Regulon

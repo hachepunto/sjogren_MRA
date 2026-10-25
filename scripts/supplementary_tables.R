@@ -8,17 +8,24 @@ rd <- function(f) {
     if (names(x)[1] == "") names(x)[1] <- "sample"
     x
 }
+# Cifras de las leyendas, calculadas a partir de las tablas
+mr  <- rd("results/integration/MRs_meta_shared.txt")
+de  <- rd("results/integration/DE_meta_shared.txt")
+n_up <- sum(de$replicated & de$direction == "up"); n_dn <- sum(de$replicated & de$direction == "down")
+fmt  <- function(x) format(x, big.mark = ",")
+
 s1 <- "results/validation/Table_S1_DE_GSE66795_replication.xlsx"
 s1x <- function(i) read.xlsx(s1, sheet = i, startRow = 2)
-s1t <- function(i) read.xlsx(s1, sheet = i, rows = 1, colNames = FALSE)[1, 1]
+s1t <- function(i) sub("^Supplementary Table S1[ab]\\. ", "",   # el prefijo se antepone al escribir
+                        read.xlsx(s1, sheet = i, rows = 1, colNames = FALSE)[1, 1])
 
 sheets <- list(
   list("S1_up", "S1", s1t(1), s1x(1)),
   list("S1_down", "S1", s1t(2), s1x(2)),
-  list("S2", "S2", "Cross-cohort integration of regulator activity for the 240 shared transcription factors: NES, p and rank per cohort, Stouffer z, p and FDR, direction, restricted RRA score (descriptive), and membership in the submitted version's RRA lists (v2_consensus). Consensus: same sign in both cohorts and BH_stouffer < 0.10.",
-       rd("results/integration/MRs_meta_shared.txt")),
-  list("S3", "S3", "Cross-cohort integration of differential expression for the 8,007 shared genes: limma statistics per cohort (_51 = GSE51092, _84 = GSE84844), replication flag (FDR < 0.05 in both, same sign), Stouffer z, p and FDR, restricted RRA score (descriptive).",
-       rd("results/integration/DE_meta_shared.txt")),
+  list("S2", "S2", sprintf("Cross-cohort integration of regulator activity for the %d shared transcription factors: NES, p and rank per cohort, direction, Stouffer z, p and FDR, consensus flag (same sign in both cohorts and BH_stouffer < 0.10; %d regulators), restricted RRA score and FDR (descriptive), and membership in the RRA lists computed over the union of regulators, the integration criterion of the submitted version (RRA_union_list).", nrow(mr), sum(mr$consensus)),
+       mr),
+  list("S3", "S3", sprintf("Cross-cohort integration of differential expression for the %s shared genes: limma statistics per cohort (_51 = GSE51092, _84 = GSE84844), direction, replication flag (FDR < 0.05 in both cohorts, same sign; %d up, %d down), Stouffer z, p and FDR, meta_sig (same sign and BH_stouffer < 0.05), restricted RRA score and FDR (descriptive), and membership in the RRA lists computed over the full tables (RRA_union_list; submitted version's criterion with the ordering of the down list corrected).", fmt(nrow(de)), n_up, n_dn),
+       de),
   list("S4_regulators", "S4", "Cross-network VIPER: own-network and cross-network NES for every regulator, and fixed-network meta-analysis (aracne_*: ARACNe-AP network of GSE51092 applied to both signatures; corto_*: corto network of GSE84844 applied to both signatures).",
        rd("results/robustness/viper_cross_network.txt")),
   list("S4_concordance", "S4", "Cross-network VIPER: Spearman concordance between own-network and cross-network NES.",
@@ -35,7 +42,7 @@ sheets <- list(
   list("S6_MCP_GSE84844", "S6", "MCP-counter scores per sample, GSE84844.", rd("results/robustness/mcpcounter_GSE84844.txt")),
   list("S6_composition", "S6", "Composition tests: pSS vs control per cell type (Wilcoxon), BH across cell types within cohort.",
        rd("results/robustness/deconv_composition_tests.txt")),
-  list("S6_adjusted_MRA", "S6", "Composition-adjusted versus unadjusted NES for every regulator (expression adjusted for xCell scores of six populations), with unadjusted and adjusted Stouffer meta-analysis.",
+  list("S6_adjusted_MRA", "S6", "Composition-adjusted versus unadjusted NES for every regulator (xCell scores of six populations regressed out of the expression, with disease status in the design so that the pSS effect is preserved), with unadjusted and adjusted Stouffer meta-analysis.",
        rd("results/robustness/mra_adjusted_composition.txt")),
   list("S6_concordance", "S6", "Spearman concordance between adjusted and unadjusted NES per cohort.",
        rd("results/robustness/mra_adjusted_concordance.txt")),
@@ -46,9 +53,10 @@ sheets <- list(
 )
 
 legends <- c(
-  S1 = "Replication of the 375 upregulated and 200 downregulated genes in GSE66795 (161 and 68 recovered; limma statistics in the three cohorts).",
-  S2 = "Cross-cohort integration of regulator activity for the 240 shared transcription factors.",
-  S3 = "Cross-cohort integration of differential expression for the 8,007 shared genes.",
+  S1 = sprintf("Replication of the %d upregulated and %d downregulated genes in GSE66795 (%d and %d recovered; limma statistics in the three cohorts).",
+               n_up, n_dn, nrow(sheets[[1]][[4]]), nrow(sheets[[2]][[4]])),
+  S2 = sprintf("Cross-cohort integration of regulator activity for the %d shared transcription factors.", nrow(mr)),
+  S3 = sprintf("Cross-cohort integration of differential expression for the %s shared genes.", fmt(nrow(de))),
   S4 = "Cross-network VIPER: own-network and cross-network NES for every regulator, fixed-network meta-analysis, and concordance statistics.",
   S5 = "VIPER with CollecTRI regulons: NES and p per cohort, regulon sizes, Stouffer meta-analysis, and coverage of the consensus regulators in CollecTRI.",
   S6 = "Cell-type deconvolution (xCell and MCP-counter scores per sample), composition tests, and composition-adjusted versus unadjusted NES for every regulator with the adjusted meta-analysis.",

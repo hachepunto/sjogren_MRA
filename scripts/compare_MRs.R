@@ -1,4 +1,3 @@
-library(viper)
 library(RobustRankAggreg)
 
 # Carpetas de salida
@@ -50,12 +49,12 @@ write.table(shared, file = "results/integration/MRs_comparacion.txt", quote = FA
 # ── 3. Scatter NES: GSE51092 vs GSE84844 ─────────────────────────────────────
 top_both <- shared$rank_gse51092 <= 25 | shared$rank_84844 <= 25
 
-pdf("results/figures/MRs_scatter_NES.pdf", width = 6, height = 6)
+pdf("results/figures/MRs_scatter_NES.pdf", width = 6, height = 6, encoding = "WinAnsi.enc")   # WinAnsi incluye el guion largo
 plot(shared$NES_gse51092, shared$NES_84844,
      pch  = 16,
      col  = ifelse(shared$rank_gse51092 <= 25 & shared$rank_84844 <= 25,
                    "firebrick", "grey70"),
-     xlab = "NES — GSE51092 (ARACNE-AP)",
+     xlab = "NES — GSE51092 (ARACNe-AP)",
      ylab = "NES — GSE84844 (corto)",
      main = "Master Regulators: GSE51092 vs GSE84844")
 abline(h = 0, v = 0, lty = 2, col = "grey50")
@@ -65,7 +64,7 @@ text(top_label$NES_gse51092, top_label$NES_84844,
      labels = top_label$Regulon, cex = 0.7, pos = 3)
 dev.off()
 
-# ── 4. Diagrama de Venn (top 25 de cada dataset) ─────────────────────────────
+# ── 4. Solapamiento del top 25 de cada cohorte ─────────────────────────────
 top25_gse51092 <- sum_gse51092$Regulon[1:25]
 top25_84844    <- sum_84844$Regulon[1:25]
 only_gse51092  <- setdiff(top25_gse51092, top25_84844)
@@ -76,7 +75,9 @@ cat("\nTop-25 solo en GSE51092: ", paste(only_gse51092, collapse = ", "), "\n")
 cat("Top-25 solo en GSE84844: ", paste(only_84844,     collapse = ", "), "\n")
 cat("Top-25 en ambos:         ", paste(in_both,         collapse = ", "), "\n")
 
-# ── 5. Robust Rank Aggregation ────────────────────────────────────────────────
+# ── 5. Robust Rank Aggregation sobre la unión de reguladores (referencia) ────
+# Criterio de integración de la versión sometida; el consenso del artículo se
+# define en meta_MRs.R sobre los TFs compartidos.
 run_rra <- function(s1, s2, direction = c("activated", "repressed")) {
     direction <- match.arg(direction)
     if (direction == "activated") {

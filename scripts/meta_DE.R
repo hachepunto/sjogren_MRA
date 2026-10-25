@@ -12,7 +12,8 @@ invisible(lapply(c("results/integration"),
 #   (a) Replicación: FDR < 0.05 en cada cohorte por separado (criterio primario).
 #   (b) Meta-análisis Stouffer sobre z derivados de p y signo de limma; BH sobre
 #       los 8,007 genes.
-#   (c) RRA restringida, N = genes concordantes en esa dirección; BH sobre Score.
+#   (c) RRA restringida, N = genes concordantes en esa dirección; BH sobre Score
+#       (descriptiva).
 
 # ── 1. Tabla de genes compartidos (de compare_ED.R) ──────────────────────────
 d <- read.delim("results/de/DE_comparacion.txt")
@@ -40,23 +41,24 @@ run_rra <- function(dd) {
     r$RRA_BH <- p.adjust(r$Score, method = "BH")
     r
 }
-rra_up <- run_rra(d[d$direction == "up", ])
-rra_dn <- run_rra(d[d$direction == "down", ])
-rra_all <- rbind(rra_up, rra_dn)
+rra_shared_up <- run_rra(d[d$direction == "up", ])
+rra_shared_dn <- run_rra(d[d$direction == "down", ])
+rra_all <- rbind(rra_shared_up, rra_shared_dn)
 d$RRA_score <- rra_all$Score[match(d$gene, rra_all$Name)]
 d$RRA_BH    <- rra_all$RRA_BH[match(d$gene, rra_all$Name)]
 
-# ── 5. Referencia: listas RRA de la v2 corregida (sobre tablas completas) ────
-v2_up <- read.delim("results/de/DE_RRA_upregulated.txt")$Name
-v2_dn <- read.delim("results/de/DE_RRA_downregulated.txt")$Name
-d$v2_rra <- ifelse(d$gene %in% v2_up, "up", ifelse(d$gene %in% v2_dn, "down", ""))
+# ── 5. Referencia: listas RRA sobre las tablas completas (compare_ED.R), el
+# criterio de la versión sometida con el orden de la lista down corregido ────
+union_up <- read.delim("results/de/DE_RRA_upregulated.txt")$Name
+union_dn <- read.delim("results/de/DE_RRA_downregulated.txt")$Name
+d$RRA_union_list <- ifelse(d$gene %in% union_up, "up", ifelse(d$gene %in% union_dn, "down", ""))
 
 # ── 6. Salida ─────────────────────────────────────────────────────────────────
 d <- d[order(d$p_stouffer), ]
 out_cols <- c("gene", "logFC_51", "P.Value_51", "adj.P.Val_51",
               "logFC_84", "P.Value_84", "adj.P.Val_84",
               "direction", "replicated", "z_stouffer", "p_stouffer",
-              "BH_stouffer", "meta_sig", "RRA_score", "RRA_BH", "v2_rra")
+              "BH_stouffer", "meta_sig", "RRA_score", "RRA_BH", "RRA_union_list")
 write.table(d[, out_cols], "results/integration/DE_meta_shared.txt",
             sep = "\t", quote = FALSE, row.names = FALSE)
-save(d, rra_up, rra_dn, file = "results/integration/meta_DE_results.rda")
+save(d, rra_shared_up, rra_shared_dn, file = "results/integration/meta_DE_results.rda")

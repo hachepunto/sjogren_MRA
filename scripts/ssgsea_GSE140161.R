@@ -24,9 +24,7 @@ storage.mode(eset) <- "double"
 stopifnot(!anyNA(eset))
 
 # ── 2. Firma: genes up replicados (FDR < 0.05 en GSE51092 y GSE84844) ────────
-sig_file <- "results/de/DE_replicated_up.txt"
-suffix   <- "_replicated"
-sig_up   <- read_tsv(sig_file, show_col_types = FALSE)
+sig_up   <- read_tsv("results/de/DE_replicated_up.txt", show_col_types = FALSE)
 n_sig    <- nrow(sig_up)
 gene_set <- sig_up$gene[sig_up$gene %in% rownames(eset)]
 
@@ -41,7 +39,7 @@ names(scores) <- colnames(eset)
 
 write_tsv(data.frame(sample      = names(scores),
                      ssGSEA_score = scores),
-          paste0("results/validation/ssGSEA_GSE140161_scores", suffix, ".txt"))
+          "results/validation/ssGSEA_GSE140161_scores_replicated.txt")
 
 print(summary(scores))
 
@@ -62,9 +60,10 @@ p <- ggplot(df_plot, aes(x = score)) +
                         length(gene_set), "/", n_sig, " signature genes present)")) +
     theme_bw(base_size = 11)
 
-pdf(paste0("results/figures/ssGSEA_GSE140161", suffix, ".pdf"), width = 6, height = 5)
+pdf("results/figures/ssGSEA_GSE140161_replicated.pdf", width = 6, height = 5,
+    encoding = "WinAnsi.enc")   # WinAnsi incluye el guion largo
 print(p)
 dev.off()
 
 # ── 5. Save ───────────────────────────────────────────────────────────────────
-save(eset, scores, gene_set, n_sig, file = paste0("results/validation/ssGSEA_GSE140161", suffix, ".rda"))
+save(eset, scores, gene_set, n_sig, file = "results/validation/ssGSEA_GSE140161_replicated.rda")

@@ -31,32 +31,30 @@ de_gse66795 <- rownames_to_column(de_gse66795, var = "gene")
 write_tsv(de_gse66795, "results/validation/DE_limma_GSE66795.txt")
 
 # ── 4. Solapamiento con los conjuntos replicados (FDR < 0.05 en ambas cohortes)
-# Se conservan los nombres rra_up / rra_dn por compatibilidad con el resto del
-# script; la columna Name es el símbolo y Score el p combinado (Stouffer).
-load("results/de/comparison_DE_results.rda")   # shared (con z_stouffer, p_stouffer), sig_up, sig_dn
+load("results/de/comparison_DE_results.rda")   # shared (con z_stouffer, p_stouffer)
 rep_cols <- c("gene", "p_stouffer", "logFC_51", "adj.P.Val_51", "logFC_84", "adj.P.Val_84")
-rra_up <- shared[shared$concordant_up,   rep_cols]
-rra_dn <- shared[shared$concordant_down, rep_cols]
-names(rra_up)[1:2] <- names(rra_dn)[1:2] <- c("Name", "Score")
+rep_up <- shared[shared$concordant_up,   rep_cols]
+rep_dn <- shared[shared$concordant_down, rep_cols]
+names(rep_up)[1] <- names(rep_dn)[1] <- "Name"
 
 sig_up66 <- de_gse66795$gene[de_gse66795$adj.P.Val < 0.05 & de_gse66795$logFC > 0]
 sig_dn66 <- de_gse66795$gene[de_gse66795$adj.P.Val < 0.05 & de_gse66795$logFC < 0]
 
-overlap_up <- rra_up[rra_up$Name %in% sig_up66, ]
-overlap_dn <- rra_dn[rra_dn$Name %in% sig_dn66, ]
+overlap_up <- rep_up[rep_up$Name %in% sig_up66, ]
+overlap_dn <- rep_dn[rep_dn$Name %in% sig_dn66, ]
 
 print(data.frame(
-    set        = c(sprintf("replicated_up (n=%d)", nrow(rra_up)), sprintf("replicated_down (n=%d)", nrow(rra_dn))),
+    set        = c(sprintf("replicated_up (n=%d)", nrow(rep_up)), sprintf("replicated_down (n=%d)", nrow(rep_dn))),
     replicated = c(nrow(overlap_up), nrow(overlap_dn)),
-    pct        = round(c(nrow(overlap_up) / nrow(rra_up),
-                         nrow(overlap_dn) / nrow(rra_dn)) * 100, 1)
+    pct        = round(c(nrow(overlap_up) / nrow(rep_up),
+                         nrow(overlap_dn) / nrow(rep_dn)) * 100, 1)
 ))
 
 # ── 5. Save ───────────────────────────────────────────────────────────────────
 build_table_s1 <- function(overlap, de) {
     out <- merge(overlap, de[, c("gene", "logFC", "adj.P.Val")],
                  by.x = "Name", by.y = "gene", all.x = TRUE, sort = FALSE)
-    names(out)[names(out) == "Score"] <- "p_stouffer_discovery_validation"
+    names(out)[names(out) == "p_stouffer"] <- "p_stouffer_discovery_validation"
     names(out)[names(out) == "logFC"] <- "logFC_GSE66795"
     names(out)[names(out) == "adj.P.Val"] <- "adj.P.Val_GSE66795"
     out <- out[order(out$p_stouffer_discovery_validation),
@@ -75,13 +73,13 @@ sheet_dn <- sprintf("Downregulated_%d", nrow(table_s1_dn))
 
 addWorksheet(wb, sheet_up)
 writeData(wb, sheet_up,
-          x = sprintf("Supplementary Table S1a. Upregulated genes replicated in GSE51092 and GSE84844 (FDR < 0.05 in both, n=%d) that also replicate in GSE66795 (limma/eBayes, adj.P.Val < 0.05 and logFC > 0; Illumina HumanHT-12 v4.0).", nrow(rra_up)),
+          x = sprintf("Supplementary Table S1a. Upregulated genes replicated in GSE51092 and GSE84844 (FDR < 0.05 in both, n=%d) that also replicate in GSE66795 (limma/eBayes, adj.P.Val < 0.05 and logFC > 0; Illumina HumanHT-12 v4.0).", nrow(rep_up)),
           startRow = 1, startCol = 1)
 writeData(wb, sheet_up, table_s1_up, startRow = 2)
 
 addWorksheet(wb, sheet_dn)
 writeData(wb, sheet_dn,
-          x = sprintf("Supplementary Table S1b. Downregulated genes replicated in GSE51092 and GSE84844 (FDR < 0.05 in both, n=%d) that also replicate in GSE66795 (limma/eBayes, adj.P.Val < 0.05 and logFC < 0; Illumina HumanHT-12 v4.0).", nrow(rra_dn)),
+          x = sprintf("Supplementary Table S1b. Downregulated genes replicated in GSE51092 and GSE84844 (FDR < 0.05 in both, n=%d) that also replicate in GSE66795 (limma/eBayes, adj.P.Val < 0.05 and logFC < 0; Illumina HumanHT-12 v4.0).", nrow(rep_dn)),
           startRow = 1, startCol = 1)
 writeData(wb, sheet_dn, table_s1_dn, startRow = 2)
 

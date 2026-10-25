@@ -4,6 +4,8 @@ library(clusterProfiler)
 library(ReactomePA)
 library(org.Hs.eg.db)
 
+source("scripts/helpers.R")
+
 # Carpetas de salida
 invisible(lapply(c("results/de", "results/enrichment"),
                  dir.create, recursive = TRUE, showWarnings = FALSE))
@@ -27,8 +29,9 @@ shared$concordant_down <- shared$sig51 & shared$sig84 & shared$logFC_51 < 0 & sh
 write.table(shared, file = "results/de/DE_comparacion.txt", quote = FALSE, sep = "\t",
             row.names = FALSE)
 
-# ── 3. Robust Rank Aggregation ────────────────────────────────────────────────
-# Genes ordenados por P.Value ascendente dentro de cada dirección: en ambas
+# ── 3. Robust Rank Aggregation sobre las tablas completas (referencia) ───────
+# Criterio de integración de la versión sometida; ya no define los genes
+# replicados (sección 4). Genes ordenados por P.Value ascendente dentro de cada dirección: en ambas
 # direcciones el gen más significativo ocupa el rango 1, que es el "mejor"
 # para aggregateRanks. (Versión anterior invertía la lista down con rev(),
 # lo que premiaba a los genes MENOS significativos; corregido en la revisión.)
@@ -69,11 +72,6 @@ shared$z_stouffer <- (z_from(shared$P.Value_51, shared$logFC_51) +
 shared$p_stouffer <- 2 * pnorm(-abs(shared$z_stouffer))
 
 # ── 5. ORA sobre genes DE robustos (set único, sin dirección) ────────────────
-sym2entrez <- function(genes) {
-    bitr(as.character(genes), fromType = "SYMBOL", toType = "ENTREZID",
-         OrgDb = org.Hs.eg.db, drop = TRUE)$ENTREZID
-}
-
 sig_all         <- union(as.character(sig_up), as.character(sig_dn))
 sig_all_entrez  <- sym2entrez(sig_all)
 universe_entrez <- sym2entrez(shared$gene)

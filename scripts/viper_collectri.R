@@ -1,9 +1,11 @@
 library(viper)
 
-# Validación con interactoma externo curado (Review 4, punto M3): VIPER sobre
-# las firmas pSS vs control de ambas cohortes usando los regulones de CollecTRI
-# (OmniPath, licencia académica; resources/collectri_regulons_human.tsv, descargado
-# de https://omnipathdb.org/interactions?datasets=collectri&organisms=9606,
+source("scripts/helpers.R")
+
+# Validación con interactoma externo curado: VIPER sobre las firmas pSS vs
+# control de ambas cohortes usando los regulones de CollecTRI (OmniPath;
+# resources/collectri_regulons_human.tsv, descargado de
+# https://omnipathdb.org/interactions?datasets=collectri&organisms=9606&genesymbols=1,
 # complejos excluidos, mor = -1 si solo inhibición, +1 en otro caso).
 # Los regulones curados son más pequeños que los inferidos, por lo que se usa
 # minsize = 10 (en lugar de 25) y se reporta el tamaño efectivo por TF.
@@ -28,23 +30,15 @@ build_regulon <- function(ct, genes) {
 }
 
 # ── 2. Firmas y VIPER por cohorte ────────────────────────────────────────────
-run_msviper <- function(eset, disease, regulon, per = 1000) {
-    cases <- which(disease == "pSS"); ctrls <- which(disease == "control")
-    sig   <- rowTtest(eset[, cases], eset[, ctrls])
-    sig   <- (qnorm(sig$p.value / 2, lower.tail = FALSE) * sign(sig$statistic))[, 1]
-    nullm <- ttestNull(eset[, cases], eset[, ctrls], per = per, repos = TRUE,
-                       verbose = FALSE)
-    msviper(sig, regulon, nullm, minsize = MINSIZE, verbose = FALSE)
-}
 
 e <- new.env(); load("results/mra/mra_GSE51092.rda", envir = e)
 reg51 <- build_regulon(ct, rownames(e$eset))
-ct51  <- run_msviper(e$eset, e$disease, reg51)
+ct51  <- run_msviper(e$eset, e$disease, reg51, minsize = MINSIZE)
 size51 <- sapply(reg51, function(r) length(r$tfmode))
 
 e <- new.env(); load("results/mra/mra_GSE84844.rda", envir = e)
 reg84 <- build_regulon(ct, rownames(e$eset))
-ct84  <- run_msviper(e$eset, e$disease, reg84)
+ct84  <- run_msviper(e$eset, e$disease, reg84, minsize = MINSIZE)
 size84 <- sapply(reg84, function(r) length(r$tfmode))
 rm(e)
 
@@ -68,7 +62,7 @@ cons$NES_ct_51092 <- res$NES_ct_51092[match(cons$Regulon, res$Regulon)]
 cons$NES_ct_84844 <- res$NES_ct_84844[match(cons$Regulon, res$Regulon)]
 cons$z_ct_stouffer <- res$z_stouffer[match(cons$Regulon, res$Regulon)]
 cons$BH_ct_stouffer <- res$BH_stouffer[match(cons$Regulon, res$Regulon)]
-res$consensus_inferred <- res$Regulon %in% cons$Regulon[cons$BH_stouffer < 0.10]
+res$consensus_inferred <- res$Regulon %in% cons$Regulon[cons$consensus]
 
 # Concordancia global entre NES inferido y NES CollecTRI (TFs en ambos)
 both <- merge(cons[, c("Regulon", "z_stouffer")], res[, c("Regulon", "z_stouffer")],

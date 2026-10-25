@@ -10,7 +10,7 @@ invisible(lapply(c("results/mra", "results/de", "results/figures"),
 
 load("results/mra/eset_GSE51092.rda")   # eset, disease (prep_GSE51092.R)
 
-# ── 1. Regulon desde ARACNE-AP ────────────────────────────────────────────────
+# ── 1. Regulon desde ARACNe-AP ────────────────────────────────────────────────
 regulon_gse51092 <- aracne2regulon("results/networks/sjs_network.txt", eset)
 cat("Regulon:", length(regulon_gse51092), "TFs\n")
 
@@ -18,9 +18,7 @@ cat("Regulon:", length(regulon_gse51092), "TFs\n")
 Ncases    <- which(disease == "pSS")
 Ncontrols <- which(disease == "control")
 
-signature <- rowTtest(eset[, Ncases], eset[, Ncontrols])
-signature <- (qnorm(signature$p.value / 2, lower.tail = FALSE) *
-              sign(signature$statistic))[, 1]
+signature <- signature_z(eset, disease)
 
 # ── 3. Null model ─────────────────────────────────────────────────────────────
 set.seed(1)   # permutaciones de ttestNull

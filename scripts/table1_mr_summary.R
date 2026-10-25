@@ -1,6 +1,4 @@
-library(Biobase)
-
-# Tabla 1 del texto principal (revisor 4): resumen de los 14 reguladores de
+# Tabla 1 del texto principal: resumen de los 14 reguladores de
 # consenso que reúne actividad (meta_MRs.R), expresión del propio transcrito
 # (meta_DE.R), ORA del regulón (ora_regulons.R) y cobertura en CollecTRI
 # (viper_collectri.R). Una fila por regulador, ordenada por |z| descendente.
@@ -13,7 +11,7 @@ ct <- read.delim("results/robustness/consensus_vs_collectri.txt")
 go <- read.delim("results/enrichment/ORA_GO_BP.txt")
 re <- read.delim("results/enrichment/ORA_Reactome.txt")
 
-cons <- mr[mr$direction != "discordant" & mr$BH_stouffer < 0.10, ]
+cons <- mr[mr$consensus, ]
 cons <- cons[order(-abs(cons$z_stouffer)), ]
 tf   <- cons$Regulon
 
@@ -41,7 +39,7 @@ curated <- ifelse(cx$in_collectri,
 tab <- data.frame(
     regulator             = tf,
     direction             = cons$direction,
-    regulon_size          = sapply(regulon_gse51092[tf], function(r) length(r$tfmode)),
+    regulon_size_ARACNe   = sapply(regulon_gse51092[tf], function(r) length(r$tfmode)),
     NES_GSE51092          = cons$NES_gse51092,
     NES_GSE84844          = cons$NES_84844,
     z_stouffer            = cons$z_stouffer,
@@ -58,7 +56,7 @@ tab <- data.frame(
     top_Reactome          = ifelse(is.na(top_re), "none", top_re),
     collectri_targets     = curated
 )
-print(tab[, c("regulator", "regulon_size", "z_stouffer", "transcript_replicated",
+print(tab[, c("regulator", "regulon_size_ARACNe", "z_stouffer", "transcript_replicated",
               "top_term", "collectri_targets")], row.names = FALSE)
 
 write.table(tab, "results/integration/Table1_MR_summary.tsv", sep = "\t", quote = FALSE, row.names = FALSE)

@@ -3,7 +3,9 @@ library(MCPcounter)
 library(limma)
 library(viper)
 
-# Análisis de sensibilidad a la composición celular (Review 4, punto M1).
+source("scripts/helpers.R")
+
+# Análisis de sensibilidad a la composición celular.
 # Sangre total: la firma pSS vs control mezcla cambios por célula y cambios de
 # proporciones. Se estiman proporciones relativas con xCell (y MCP-counter como
 # segundo estimador), se contrasta pSS vs control por tipo celular, y se repite
@@ -17,9 +19,13 @@ set.seed(1)
 CELLS <- c("B-cells", "CD4+ T-cells", "CD8+ T-cells", "NK cells",
            "Monocytes", "Neutrophils")
 
+# Firma de MCP-counter del commit fijado (por defecto el paquete la descarga de master)
+mcp_genes <- read.table("data/MCPcounter_genes.txt", sep = "\t", stringsAsFactors = FALSE,
+                        header = TRUE, colClasses = "character", check.names = FALSE)
+
 deconv <- function(eset) {
     xc <- xCellAnalysis(eset, rnaseq = FALSE, parallel.sz = 1)
-    mc <- MCPcounter.estimate(eset, featuresType = "HUGO_symbols")
+    mc <- MCPcounter.estimate(eset, featuresType = "HUGO_symbols", genes = mcp_genes)
     list(xcell = xc, mcp = mc)
 }
 test_composition <- function(scores, disease, label, method) {
@@ -31,15 +37,12 @@ test_composition <- function(scores, disease, label, method) {
                    p = w$p.value)
     }))
 }
-adjusted_mra <- function(eset, disease, regulon, covars, per = 1000) {
+adjusted_mra <- function(eset, disease, regulon, covars) {
     covars <- t(scale(t(covars)))                  # tipos celulares x muestras
-    adj    <- removeBatchEffect(eset, covariates = t(covars))
-    cases  <- which(disease == "pSS"); ctrls <- which(disease == "control")
-    sig    <- rowTtest(adj[, cases], adj[, ctrls])
-    sig    <- (qnorm(sig$p.value / 2, lower.tail = FALSE) * sign(sig$statistic))[, 1]
-    nullm  <- ttestNull(adj[, cases], adj[, ctrls], per = per, repos = TRUE,
-                        verbose = FALSE)
-    msviper(sig, regulon, nullm, minsize = 25, verbose = FALSE)
+    # design protege el efecto pSS vs control al regresar las covariables
+    design <- model.matrix(~ factor(disease, levels = c("control", "pSS")))
+    adj    <- removeBatchEffect(eset, covariates = t(covars), design = design)
+    run_msviper(adj, disease, regulon)
 }
 
 run_cohort <- function(eset, disease, regulon, mrs_own, label) {
@@ -90,8 +93,7 @@ stouffer <- function(a, b) {
 m_un <- stouffer(tab$NES_unadj_51092, tab$NES_unadj_84844); names(m_un) <- paste0("unadj_", names(m_un))
 m_ad <- stouffer(tab$NES_adj_51092,   tab$NES_adj_84844);   names(m_ad) <- paste0("adj_",   names(m_ad))
 tab <- cbind(tab, m_un, m_ad)
-cons <- read.delim("results/integration/MRs_meta_shared.txt")
-tab$consensus <- tab$Regulon %in% cons$Regulon[cons$BH_stouffer < 0.10 & cons$direction != "discordant"]
+tab$consensus <- tab$Regulon %in% read_consensus()$Regulon
 tab <- tab[order(tab$adj_p), ]
 
 write.table(rbind(r51$comp, r84$comp), "results/robustness/deconv_composition_tests.txt",

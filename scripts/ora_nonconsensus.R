@@ -2,8 +2,11 @@ library(clusterProfiler)
 library(ReactomePA)
 library(org.Hs.eg.db)
 
-# ORA de los regulones ARACNE-AP de los cinco reguladores que no entran al
-# consenso pero se evalúan aparte con la red fija (Métodos Suplementarios 2.1).
+source("scripts/helpers.R")
+
+# ORA de los regulones ARACNe-AP de los cinco reguladores fuera del consenso que
+# discute el artículo (Resultados Suplementarios 2.1): HESX1, ZNF684 y THRA no
+# tienen regulón de >= 25 blancos en corto; MEF2D y FOXJ2 quedan justo arriba del umbral.
 # Mismo fondo, umbrales y reducción semántica que ora_regulons.R.
 dir.create("results/enrichment", recursive = TRUE, showWarnings = FALSE)
 
@@ -22,10 +25,6 @@ foxj2_cited <- c("SMARCA4", "CHD4", "RPA1", "XRCC6", "REV3L", "VCP", "USP7")
 cat("Genes citados en el regulón de FOXJ2:\n")
 print(setNames(foxj2_cited %in% gene_lists_sym$FOXJ2, foxj2_cited))
 
-sym2entrez <- function(genes) {
-    bitr(genes, fromType = "SYMBOL", toType = "ENTREZID",
-         OrgDb = org.Hs.eg.db, drop = TRUE)$ENTREZID
-}
 gene_lists_entrez <- lapply(gene_lists_sym, sym2entrez)
 universe_entrez   <- sym2entrez(rownames(eset))
 

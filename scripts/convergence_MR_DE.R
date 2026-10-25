@@ -10,7 +10,6 @@ invisible(lapply(c("results/integration"),
 mr <- read.delim("results/integration/MRs_meta_shared.txt")
 de <- read.delim("results/integration/DE_meta_shared.txt")
 
-mr$consensus <- mr$direction != "discordant" & mr$BH_stouffer < 0.10
 
 m <- merge(mr, de[, c("gene", "direction", "replicated", "logFC_51", "adj.P.Val_51",
                       "logFC_84", "adj.P.Val_84", "z_stouffer", "BH_stouffer")],

@@ -21,7 +21,23 @@ authors:
 version: 2.0.0
 date-released: "2026-10-24"
 url: "https://github.com/hachepunto/sjogren_MRA"
-license: GPL-3.0
+repository-code: "https://github.com/hachepunto/sjogren_MRA"
+abstract: >-
+  Snakemake workflow for master regulator analysis of primary Sjögren's syndrome
+  in two independent whole-blood cohorts (GSE51092, GSE84844): ARACNe-AP and corto
+  network inference, VIPER, Stouffer meta-analysis of regulator activity, replication
+  of differential expression, functional enrichment, external validation (GSE66795,
+  GSE140161) and robustness analyses (exchanged networks, CollecTRI,
+  cell-composition adjustment, fgsea).
+keywords:
+  - Sjögren's syndrome
+  - master regulator analysis
+  - VIPER
+  - gene regulatory network
+  - interferon signature
+  - transcriptomics
+  - Snakemake
+license: GPL-3.0-only
 preferred-citation:
   type: article
   title: "Master Regulator Analysis Reveals a Reproducible Interferon-Centered Regulatory Architecture in Primary Sjögren's Syndrome"

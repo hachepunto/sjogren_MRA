@@ -20,6 +20,7 @@ cat("Expression matrix:", nrow(eset), "genes x", ncol(eset), "samples\n")
 
 # ── 2. Case / control labels ──────────────────────────────────────────────────
 pdata   <- pData(gse)
+stopifnot(!anyNA(pdata$"disease:ch1"))
 disease <- ifelse(pdata$"disease:ch1" == "Healthy control", "control", "pSS")
 print(table(disease))
 
@@ -33,7 +34,7 @@ cat("TFs present in GSE84844:", length(centroids), "of", length(lambert_symbols)
 N_THREADS <- as.integer(commandArgs(trailingOnly = TRUE)[1])
 if (is.na(N_THREADS)) N_THREADS <- 4
 
-set.seed(1)   # bootstraps de corto y permutaciones de ttestNull
+set.seed(1)   # permutaciones de ttestNull; corto fija la semilla de cada bootstrap (1-100)
 regulon_gse84844 <- corto(
     inmat       = eset,
     centroids   = centroids,
@@ -50,14 +51,14 @@ cat("Network saved to results/networks/regulon_GSE84844_corto.rda\n")
 Ncases    <- which(disease == "pSS")
 Ncontrols <- which(disease == "control")
 
-signature <- rowTtest(eset[, Ncases], eset[, Ncontrols])
-signature <- (qnorm(signature$p.value / 2, lower.tail = FALSE) * sign(signature$statistic))[, 1]
+signature <- signature_z(eset, disease)
 
 nullmodel <- ttestNull(eset[, Ncases], eset[, Ncontrols], per = 1000, repos = TRUE)
 
 mrs_gse84844 <- msviper(signature, regulon_gse84844, nullmodel)
 
 print(summary(mrs_gse84844))
+mrs_gse84844 <- ledge(mrs_gse84844)
 
 top_mrs <- viper_mrsTopTable(mrs_gse84844, n = 100)
 write_tsv(top_mrs, "results/mra/top100_MRs_GSE84844.txt")

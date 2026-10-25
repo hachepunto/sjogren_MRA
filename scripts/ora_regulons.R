@@ -2,17 +2,17 @@ library(clusterProfiler)
 library(ReactomePA)
 library(org.Hs.eg.db)
 
+source("scripts/helpers.R")
+
 # Carpetas de salida
 invisible(lapply(c("results/enrichment", "results/figures"),
                  dir.create, recursive = TRUE, showWarnings = FALSE))
 
 load("results/mra/mra_GSE51092.rda")                 # regulon_gse51092, eset
-cons <- read.delim("results/integration/MRs_meta_shared.txt")  # de meta_MRs.R
 
-# ── 1. MRs a analizar: consenso entre cohortes (Stouffer, BH < 0.10, mismo signo) ─
-# Sustituye el top 10 + 10 por RRA de la versión sometida: el criterio de
-# selección es ahora el mismo que define la lista de consenso del manuscrito.
-cons    <- cons[cons$BH_stouffer < 0.10 & cons$direction != "discordant", ]
+# ── 1. MRs a analizar: consenso entre cohortes (meta_MRs.R) ──────────────────
+# Regulones ARACNe-AP de GSE51092; fondo = genes de la matriz de expresión.
+cons    <- read_consensus()
 mrs_act <- cons$Regulon[cons$direction == "activated"]
 mrs_rep <- cons$Regulon[cons$direction == "repressed"]
 all_mrs <- c(mrs_act, mrs_rep)
@@ -30,11 +30,6 @@ cat("Tamaño de regulones:\n")
 print(sapply(gene_lists_sym, length))
 
 # ── 3. Conversión a Entrez IDs ────────────────────────────────────────────────
-sym2entrez <- function(genes) {
-    bitr(genes, fromType = "SYMBOL", toType = "ENTREZID",
-         OrgDb = org.Hs.eg.db, drop = TRUE)$ENTREZID
-}
-
 gene_lists_entrez <- lapply(gene_lists_sym, sym2entrez)
 universe_entrez   <- sym2entrez(rownames(eset))
 

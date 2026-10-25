@@ -113,6 +113,7 @@ fig <- free(pA) + pB + pC + pD +   # free(): A no se alinea con las etiquetas la
        plot_annotation(tag_levels = "A") &
        theme(plot.tag = element_text(size = 22, face = "bold"))
 
-pdf("results/figures/DE_integrative_figure.pdf", width = 13, height = 12)
+pdf("results/figures/DE_integrative_figure.pdf", width = 13, height = 12,
+    encoding = "WinAnsi.enc")   # WinAnsi incluye el guion largo
 print(fig)
 dev.off()

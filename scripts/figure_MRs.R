@@ -1,5 +1,3 @@
-library(viper)
-
 # Carpetas de salida
 dir.create("results/figures", recursive = TRUE, showWarnings = FALSE)
 
@@ -7,9 +5,8 @@ dir.create("results/figures", recursive = TRUE, showWarnings = FALSE)
 # MRs_meta_shared.txt (meta_MRs.R): correr ambos antes de este script.
 load("results/integration/comparison_results.rda")   # shared
 
-# ── 1. Consenso: Stouffer sobre NES con BH < 0.10 y mismo signo en ambas ────
+# ── 1. Consenso (meta_MRs.R): Stouffer sobre NES, BH < 0.10 y mismo signo ──
 meta <- read.delim("results/integration/MRs_meta_shared.txt")
-meta$consensus <- meta$direction != "discordant" & meta$BH_stouffer < 0.10
 sig_act <- meta$Regulon[meta$consensus & meta$direction == "activated"]
 sig_rep <- meta$Regulon[meta$consensus & meta$direction == "repressed"]
 
@@ -28,7 +25,7 @@ lol <- lol[order(lol$logp), ]
 # Umbral de referencia: mayor p con BH < 0.10
 p_thr <- max(meta$p_stouffer[meta$BH_stouffer < 0.10])
 
-pdf("results/figures/MRs_integrative_figure.pdf", width = 11, height = 6)
+pdf("results/figures/MRs_integrative_figure.pdf", width = 11, height = 6, encoding = "WinAnsi.enc")   # WinAnsi incluye el guion largo
 layout(matrix(c(1, 2), nrow = 1), widths = c(1.6, 1))
 
 # Panel A — Scatter NES

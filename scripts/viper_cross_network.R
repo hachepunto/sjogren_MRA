@@ -1,9 +1,11 @@
 library(viper)
 
-# Validación cruzada red/firma (Reviewer 1, punto 4): la actividad de cada TF
+source("scripts/helpers.R")
+
+# Validación cruzada red/firma: la actividad de cada TF
 # se estima con la red inferida en la OTRA cohorte, de modo que la red y la
 # firma de expresión nunca provienen de las mismas muestras.
-#   - firma GSE84844 (pSS vs control) x red ARACNE-AP de GSE51092
+#   - firma GSE84844 (pSS vs control) x red ARACNe-AP de GSE51092
 #   - firma GSE51092 (pSS vs control) x red corto de GSE84844
 # Se compara con la actividad obtenida con la red propia (mra_*.rda).
 
@@ -22,15 +24,6 @@ e <- new.env()
 load("results/networks/regulon_GSE84844_corto.rda", envir = e)   # regulon_gse84844
 reg84 <- e$regulon_gse84844
 rm(e)
-
-run_msviper <- function(eset, disease, regulon, per = 1000) {
-    cases <- which(disease == "pSS"); ctrls <- which(disease == "control")
-    sig   <- rowTtest(eset[, cases], eset[, ctrls])
-    sig   <- (qnorm(sig$p.value / 2, lower.tail = FALSE) * sign(sig$statistic))[, 1]
-    nullm <- ttestNull(eset[, cases], eset[, ctrls], per = per, repos = TRUE,
-                       verbose = FALSE)
-    msviper(sig, regulon, nullm, minsize = 25, verbose = FALSE)
-}
 
 # ── 2. VIPER cruzado ──────────────────────────────────────────────────────────
 cross84 <- run_msviper(eset84, dis84, reg51)   # firma 84844 x red 51092
@@ -68,7 +61,7 @@ concordance <- data.frame(comparison = rownames(concordance), concordance,
                           row.names = NULL)
 
 # ── 4. Consenso con red fija (sin dependencia red/firma) ─────────────────────
-# Red ARACNE-AP (GSE51092) aplicada a ambas firmas: Stouffer de NES propio
+# Red ARACNe-AP (GSE51092) aplicada a ambas firmas: Stouffer de NES propio
 # (51092) y cruzado (84844); idem para la red corto.
 meta <- function(z1, z2) {
     z <- (z1 + z2) / sqrt(2); p <- 2 * pnorm(-abs(z))
@@ -82,10 +75,7 @@ names(m_corto)  <- paste0("corto_",  names(m_corto))
 res <- cbind(res, m_aracne, m_corto)
 
 # ── 5. Recuperación de los MRs de consenso ───────────────────────────────────
-cons <- read.delim("results/integration/MRs_meta_shared.txt")
-cons <- cons[cons$BH_stouffer < 0.10 & cons$direction != "discordant",
-             c("Regulon", "direction", "z_stouffer")]
-res$consensus <- res$Regulon %in% cons$Regulon
+res$consensus <- res$Regulon %in% read_consensus()$Regulon
 res <- res[order(res$aracne_p), ]
 
 write.table(res, "results/robustness/viper_cross_network.txt",

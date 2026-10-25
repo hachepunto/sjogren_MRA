@@ -1,20 +1,26 @@
-Package	Version	R
-viper	1.46.0	R version 4.6.1 (2026-06-24)
-corto	1.2.4	R version 4.6.1 (2026-06-24)
-limma	3.68.4	R version 4.6.1 (2026-06-24)
-RobustRankAggreg	1.2.1	R version 4.6.1 (2026-06-24)
-clusterProfiler	4.20.0	R version 4.6.1 (2026-06-24)
-ReactomePA	1.56.0	R version 4.6.1 (2026-06-24)
-GSVA	2.6.2	R version 4.6.1 (2026-06-24)
-fgsea	1.38.0	R version 4.6.1 (2026-06-24)
-xCell	1.1.0	R version 4.6.1 (2026-06-24)
-MCPcounter	1.2.0	R version 4.6.1 (2026-06-24)
-decoupleR	2.17.0	R version 4.6.1 (2026-06-24)
-OmnipathR	4.0.0	R version 4.6.1 (2026-06-24)
-quadprog	1.5.8	R version 4.6.1 (2026-06-24)
-GEOquery	2.80.0	R version 4.6.1 (2026-06-24)
-matrixStats	1.5.0	R version 4.6.1 (2026-06-24)
-ggplot2	4.0.3	R version 4.6.1 (2026-06-24)
-patchwork	1.3.2	R version 4.6.1 (2026-06-24)
-readr	2.2.0	R version 4.6.1 (2026-06-24)
-openxlsx	4.2.8.1	R version 4.6.1 (2026-06-24)
+Package	Version	Source
+R	4.6.1	
+Bioconductor	3.23	
+viper	1.46.0	Bioconductor
+corto	1.2.4	CRAN
+limma	3.68.5	Bioconductor
+GEOquery	2.80.0	Bioconductor
+matrixStats	1.5.0	CRAN
+RobustRankAggreg	1.2.1	CRAN
+clusterProfiler	4.20.3	Bioconductor
+ReactomePA	1.56.0	Bioconductor
+org.Hs.eg.db	3.23.1	Bioconductor
+GO.db	3.23.1	Bioconductor
+reactome.db	1.96.0	Bioconductor
+enrichplot	1.32.1	Bioconductor
+GSVA	2.6.14	Bioconductor
+GSEABase	1.74.0	Bioconductor
+fgsea	1.38.0	Bioconductor
+xCell	1.1.0	GitHub dviraran/xCell@20e2919eefd37e15af35f29f4944e30697098a28
+MCPcounter	1.2.0	GitHub ebecht/MCPcounter@b6eac73e91c246fcff0bb1a5c68a816cd588fc48
+ggplot2	4.0.3	CRAN
+ggrepel	0.9.8	CRAN
+patchwork	1.3.2	CRAN
+openxlsx	4.2.9	CRAN
+readr	2.2.0	CRAN
+tibble	3.3.1	CRAN
