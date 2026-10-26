@@ -14,6 +14,9 @@ load("results/de/comparison_DE_results.rda")   # shared, sig_up, sig_dn, ego_de,
 BASE  <- 11   # tamaño base de letra
 TITLE <- element_text(size = 14, hjust = 0.5)
 
+# "\u00ad" (guion suave): pdf() dibuja "-" como signo menos
+shared$gene <- gsub("-", "\u00ad", shared$gene, fixed = TRUE)
+
 # ── 1. Estado de cada gen compartido ──────────────────────────────────────────
 # Replicados y discordantes: FDR < 0.05 en ambas cohortes (detalle en el pie de figura)
 lv <- c("Replicated up", "Replicated down", "FDR < 0.05 one cohort", "Discordant",
@@ -46,9 +49,9 @@ pA <- ggplot(shared, aes(logFC_51, logFC_84, fill = status)) +
     scale_fill_manual(values = cols_status, name = NULL) +
     scale_color_manual(values = cols_status, guide = "none") +
     guides(fill = guide_legend(override.aes = list(size = 3, alpha = 1))) +
-    labs(x = expression(log[2]*FC ~ "—" ~ GSE51092 ~ "(n = 222)"),
-         y = expression(log[2]*FC ~ "—" ~ GSE84844 ~ "(n = 60)"),
-         title = "Cross-dataset differential expression") +
+    labs(x = expression(log[2]*FC ~ "—" ~ GSE51092 ~ "(" * italic(n) * " = 222)"),
+         y = expression(log[2]*FC ~ "—" ~ GSE84844 ~ "(" * italic(n) * " = 60)"),
+         title = "Cross\u00addataset differential expression") +
     theme_bw(base_size = BASE) +
     theme(plot.title = TITLE,
           legend.position = "inside",
@@ -66,6 +69,7 @@ ora_react$Database <- "Reactome"
 ora_df             <- rbind(ora_go, ora_react)
 ora_df$GeneRatioNum <- sapply(strsplit(ora_df$GeneRatio, "/"),
                               function(x) as.numeric(x[1]) / as.numeric(x[2]))
+ora_df$Description  <- gsub("-", "\u00ad", ora_df$Description, fixed = TRUE)
 ora_df$Description  <- factor(ora_df$Description,
                               levels = ora_df$Description[order(ora_df$GeneRatioNum)])
 
@@ -103,8 +107,8 @@ lollipop <- function(d, color, title) {
         theme_bw(base_size = BASE) +
         theme(plot.title = TITLE, axis.text.y = element_text(size = 9.5))
 }
-pC <- lollipop(shared[shared$concordant_up, ],   "#D73027", "Up-regulated in pSS\n(replicated)")
-pD <- lollipop(shared[shared$concordant_down, ], "#4575B4", "Down-regulated in pSS\n(replicated)")
+pC <- lollipop(shared[shared$concordant_up, ],   "#D73027", "Up\u00adregulated in pSS\n(replicated)")
+pD <- lollipop(shared[shared$concordant_down, ], "#4575B4", "Down\u00adregulated in pSS\n(replicated)")
 
 # ── 5. Composición: A y B en la columna ancha, C y D en la angosta; letras de
 # panel independientes de los títulos

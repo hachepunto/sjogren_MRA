@@ -44,6 +44,7 @@ write_tsv(data.frame(sample      = names(scores),
 print(summary(scores))
 
 # ── 4. Density figure ─────────────────────────────────────────────────────────
+# "\u00ad" (guion suave): pdf() dibuja "-" como signo menos
 df_plot <- data.frame(score = scores)
 
 p <- ggplot(df_plot, aes(x = score)) +
@@ -53,12 +54,13 @@ p <- ggplot(df_plot, aes(x = score)) +
     annotate("text", x = median(scores), y = Inf,
              label = paste0("Median = ", round(median(scores), 3)),
              vjust = 1.5, hjust = -0.05, size = 3.5, color = "gray30") +
-    labs(x = "ssGSEA enrichment score — IFN-up signature",
+    labs(x = "ssGSEA enrichment score — IFN\u00adup signature",
          y = "Density",
-         title = paste0("IFN-up signature enrichment in GSE140161\n",
-                        "(n = ", ncol(eset), " pSS patients, ",
-                        length(gene_set), "/", n_sig, " signature genes present)")) +
-    theme_bw(base_size = 11)
+         title = "IFN\u00adup signature enrichment in GSE140161",
+         subtitle = bquote("(" * italic(n) * " = " * .(ncol(eset)) * " pSS patients, " *
+                           .(length(gene_set)) * "/" * .(n_sig) * " signature genes present)")) +
+    theme_bw(base_size = 11) +
+    theme(plot.subtitle = element_text(size = rel(1.2)))   # mismo tamaño que el título
 
 pdf("results/figures/ssGSEA_GSE140161_replicated.pdf", width = 6, height = 5,
     encoding = "WinAnsi.enc")   # WinAnsi incluye el guion largo

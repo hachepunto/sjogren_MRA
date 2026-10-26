@@ -63,12 +63,18 @@ cc_react <- compareCluster(
 library(ggplot2)
 library(patchwork)
 
-p_go <- dotplot(cc_go, showCategory = 5, font.size = 9) +
+# "\u00ad" (guion suave): pdf() dibuja "-" como signo menos
+con_guion <- function(cc) {
+    cc@compareClusterResult$Description <- gsub("-", "\u00ad", cc@compareClusterResult$Description, fixed = TRUE)
+    cc
+}
+
+p_go <- dotplot(con_guion(cc_go), showCategory = 5, font.size = 9) +
     labs(title = "A   GO Biological Process") +
     theme(axis.text.x = element_text(angle = 45, hjust = 1),
           plot.title   = element_text(face = "bold", size = 10))
 
-p_react <- dotplot(cc_react, showCategory = 5, font.size = 9) +
+p_react <- dotplot(con_guion(cc_react), showCategory = 5, font.size = 9) +
     labs(title = "B   Reactome") +
     theme(axis.text.x = element_text(angle = 45, hjust = 1),
           plot.title   = element_text(face = "bold", size = 10))

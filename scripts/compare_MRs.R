@@ -54,7 +54,7 @@ plot(shared$NES_gse51092, shared$NES_84844,
      pch  = 16,
      col  = ifelse(shared$rank_gse51092 <= 25 & shared$rank_84844 <= 25,
                    "firebrick", "grey70"),
-     xlab = "NES — GSE51092 (ARACNe-AP)",
+     xlab = "NES — GSE51092 (ARACNe\u00adAP)",   # \u00ad: guion suave; pdf() dibuja "-" como signo menos
      ylab = "NES — GSE84844 (corto)",
      main = "Master Regulators: GSE51092 vs GSE84844")
 abline(h = 0, v = 0, lty = 2, col = "grey50")

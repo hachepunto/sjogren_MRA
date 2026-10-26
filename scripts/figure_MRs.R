@@ -25,6 +25,7 @@ lol <- lol[order(lol$logp), ]
 # Umbral de referencia: mayor p con BH < 0.10
 p_thr <- max(meta$p_stouffer[meta$BH_stouffer < 0.10])
 
+# "\u00ad" (guion suave): pdf() dibuja "-" como signo menos
 pdf("results/figures/MRs_integrative_figure.pdf", width = 11, height = 6, encoding = "WinAnsi.enc")   # WinAnsi incluye el guion largo
 layout(matrix(c(1, 2), nrow = 1), widths = c(1.6, 1))
 
@@ -33,9 +34,9 @@ par(mar = c(5, 5, 4, 2))
 plot(shared$NES_gse51092, shared$NES_84844,
      pch  = 21, bg = shared$color, col = "white", cex = 1.2,
      ylim = range(shared$NES_84844) + c(0, 0.3),   # espacio para las etiquetas de arriba
-     xlab = "NES — GSE51092 (ARACNE-AP, n=222)",
-     ylab = "NES — GSE84844 (corto, n=60)",
-     main = "A   Master Regulators cross-dataset")
+     xlab = expression("NES — GSE51092 (ARACNe\u00adAP, " * italic(n) * " = 222)"),
+     ylab = expression("NES — GSE84844 (corto, " * italic(n) * " = 60)"),
+     main = "A   Master Regulators cross\u00addataset")
 abline(h = 0, v = 0, lty = 2, col = "grey60")
 # Posición de cada etiqueta (1 abajo, 2 izq., 3 arriba, 4 der.) para evitar
 # que se encimen en el cuadrante superior derecho
